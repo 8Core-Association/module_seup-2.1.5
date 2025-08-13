@@ -146,42 +146,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Handle file sync
-    if (isset($_POST['action']) && GETPOST('action') === 'sync_files') {
-        ob_end_clean();
-        header('Content-Type: application/json');
-        
-        try {
-            $result = Predmet_helper::syncPredmetFiles($db, $conf, $user, $caseId);
-            echo json_encode($result);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]);
-        }
-        exit;
-    }
-
-    // Handle file stats check
-    if (isset($_GET['action']) && GETPOST('action') === 'check_file_stats') {
-        ob_end_clean();
-        header('Content-Type: application/json');
-        
-        try {
-            $stats = Predmet_helper::getFileStats($db, $conf, $caseId);
-            echo json_encode($stats);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]);
-        }
-        exit;
-    }
-
     // File existence check
     if ($_SERVER['REQUEST_METHOD'] === 'GET' && GETPOST('action') === 'check_file_exists') {
         ob_end_clean();
@@ -339,26 +303,6 @@ print '</div>';
 print '<div class="seup-upload-section">';
 print '<div class="seup-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>';
 print '<div class="seup-upload-text">Kliknite za dodavanje novog dokumenta</div>';
-
-// Sync alert (hidden by default)
-print '<div class="seup-sync-alert" id="syncAlert" style="display: none;">';
-print '<div class="seup-sync-content">';
-print '<div class="seup-sync-icon"><i class="fas fa-exclamation-triangle"></i></div>';
-print '<div class="seup-sync-text">';
-print '<strong>Detektirane su nove datoteke!</strong><br>';
-print '<span id="syncStatsText">Filesystem: 0, Baza: 0</span>';
-print '</div>';
-print '<div class="seup-sync-actions">';
-print '<button type="button" id="syncFilesBtn" class="seup-btn seup-btn-warning seup-btn-sm">';
-print '<i class="fas fa-sync me-2"></i>Sync Files';
-print '</button>';
-print '<button type="button" id="checkFilesBtn" class="seup-btn seup-btn-secondary seup-btn-sm">';
-print '<i class="fas fa-search me-2"></i>Provjeri';
-print '</button>';
-print '</div>';
-print '</div>';
-print '</div>';
-
 print '<button type="button" id="uploadTrigger" class="seup-btn seup-btn-primary">';
 print '<i class="fas fa-upload me-2"></i>Dodaj dokument';
 print '</button>';
@@ -712,85 +656,19 @@ document.addEventListener("DOMContentLoaded", function() {
             nameCell.style.alignItems = 'center';
         }
     });
+});
 
-    // File sync functionality
-    const syncAlert = document.getElementById('syncAlert');
-    const syncFilesBtn = document.getElementById('syncFilesBtn');
-    const checkFilesBtn = document.getElementById('checkFilesBtn');
-    const syncStatsText = document.getElementById('syncStatsText');
-
-    function checkFileStats() {
-        fetch('predmet.php?action=check_file_stats&id=<?php echo $caseId; ?>')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const needsSync = data.filesystem_count !== data.database_count;
-                    
-                    if (needsSync) {
-                        syncStatsText.textContent = `Filesystem: ${data.filesystem_count}, Baza: ${data.database_count}`;
-                        syncAlert.style.display = 'block';
-                    } else {
-                        syncAlert.style.display = 'none';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('File stats check error:', error);
-            });
-    }
-
-    function syncFiles() {
-        syncFilesBtn.classList.add('seup-loading');
-        
-        const formData = new FormData();
-        formData.append('action', 'sync_files');
-        formData.append('case_id', <?php echo $caseId; ?>);
-        
-        fetch('predmet.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage(`Sync završen! Dodano ${data.files_added} datoteka.`, 'success');
-                syncAlert.style.display = 'none';
-                
-                // Refresh page to show new files
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showMessage('Greška pri sync-u: ' + data.error, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Sync error:', error);
-            showMessage('Došlo je do greške pri sync-u', 'error');
-        })
-        .finally(() => {
-            syncFilesBtn.classList.remove('seup-loading');
-        });
-    }
-
-    // Event listeners
-    if (checkFilesBtn) {
-        checkFilesBtn.addEventListener('click', checkFileStats);
-    }
-
-    if (syncFilesBtn) {
-        syncFilesBtn.addEventListener('click', syncFiles);
-    }
-
-    // Auto-check on page focus (30% chance to avoid spam)
-    window.addEventListener('focus', function() {
-        if (Math.random() < 0.3) {
-            setTimeout(checkFileStats, 1000);
+// Auto-check for file changes when tab is activated
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        // Page became visible, check for file changes
+        const refreshBtn = document.getElementById('refreshFilesBtn');
+        if (refreshBtn && Math.random() < 0.3) { // 30% chance to auto-check
+            setTimeout(() => {
+                refreshBtn.click();
+            }, 1000);
         }
-    });
-
-    // Initial check after 2 seconds
-    setTimeout(checkFileStats, 2000);
+    }
 });
 </script>
 

@@ -1095,4 +1095,199 @@ class Predmet_helper
             ];
         }
     }
+
+    /**
+     * Sync filesystem files with ECM database for a specific predmet
+     */
+    public static function syncPredmetFiles($db, $conf, $user, $predmet_id)
+    {
+        $predmet_id = (int)$predmet_id;
+        
+        try {
+            // 1. Check if predmet is archived
+            $sql = "SELECT ID_arhive FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE ID_predmeta = $predmet_id";
+            $resql = $db->query($sql);
+            $is_archived = ($resql && $db->num_rows($resql) > 0);
+            
+            // 2. Determine correct directory
+            if ($is_archived) {
+                // Get archive location
+                $sql = "SELECT lokacija_arhive FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE ID_predmeta = $predmet_id";
+                $resql = $db->query($sql);
+                if ($resql && $obj = $db->fetch_object($resql)) {
+                    $dir_path = DOL_DATA_ROOT . '/ecm/' . $obj->lokacija_arhive;
+                    $ecm_filepath = rtrim($obj->lokacija_arhive, '/');
+                } else {
+                    throw new Exception("Archive location not found");
+                }
+            } else {
+                $dir_path = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+                $ecm_filepath = 'SEUP/predmet_' . $predmet_id;
+            }
+            
+            // 3. Check if directory exists
+            if (!is_dir($dir_path)) {
+                return [
+                    'success' => true,
+                    'message' => 'Nema direktorija za sync',
+                    'files_added' => 0,
+                    'files_removed' => 0
+                ];
+            }
+            
+            // 4. Get files from filesystem
+            $filesystem_files = [];
+            $files = scandir($dir_path);
+            foreach ($files as $file) {
+                if ($file != '.' && $file != '..' && $file != 'metadata.json') {
+                    $filesystem_files[] = $file;
+                }
+            }
+            
+            // 5. Get files from ECM database
+            $sql = "SELECT filename FROM " . MAIN_DB_PREFIX . "ecm_files 
+                    WHERE filepath = '" . $db->escape($ecm_filepath) . "'
+                    AND entity = " . $conf->entity;
+            
+            $resql = $db->query($sql);
+            $database_files = [];
+            if ($resql) {
+                while ($obj = $db->fetch_object($resql)) {
+                    $database_files[] = $obj->filename;
+                }
+            }
+            
+            // 6. Find missing files (in filesystem but not in database)
+            $missing_files = array_diff($filesystem_files, $database_files);
+            
+            // 7. Find orphaned files (in database but not in filesystem)
+            $orphaned_files = array_diff($database_files, $filesystem_files);
+            
+            $files_added = 0;
+            $files_removed = 0;
+            
+            // 8. Add missing files to ECM database
+            require_once DOL_DOCUMENT_ROOT . '/ecm/class/ecmfiles.class.php';
+            
+            foreach ($missing_files as $filename) {
+                $file_path = $dir_path . $filename;
+                
+                // Skip if file doesn't actually exist or is not readable
+                if (!is_file($file_path) || !is_readable($file_path)) {
+                    continue;
+                }
+                
+                $ecmfile = new EcmFiles($db);
+                $ecmfile->filepath = $ecm_filepath;
+                $ecmfile->filename = $filename;
+                $ecmfile->label = $filename;
+                $ecmfile->entity = $conf->entity;
+                $ecmfile->gen_or_uploaded = 'external'; // Mark as externally added
+                $ecmfile->description = 'Auto-synced from filesystem';
+                $ecmfile->fk_user_c = $user->id;
+                $ecmfile->fk_user_m = $user->id;
+                
+                // Get file info
+                $file_info = stat($file_path);
+                if ($file_info) {
+                    $ecmfile->date_c = $file_info['ctime'];
+                    $ecmfile->date_m = $file_info['mtime'];
+                }
+                
+                // Set MIME type
+                if (function_exists('mime_content_type')) {
+                    $ecmfile->filetype = mime_content_type($file_path);
+                } else {
+                    $ecmfile->filetype = dol_mimetype($filename);
+                }
+                
+                // Generate urbroj for external files
+                $ecmfile->urbroj = 'EXT-' . date('Ymd') . '-' . sprintf('%04d', rand(1, 9999));
+                
+                $result = $ecmfile->create($user);
+                if ($result > 0) {
+                    $files_added++;
+                    dol_syslog("Added external file to ECM: $filename", LOG_INFO);
+                } else {
+                    dol_syslog("Failed to add external file: $filename - " . $ecmfile->error, LOG_ERR);
+                }
+            }
+            
+            // 9. Remove orphaned database entries
+            foreach ($orphaned_files as $filename) {
+                $sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecm_files 
+                        WHERE filepath = '" . $db->escape($ecm_filepath) . "'
+                        AND filename = '" . $db->escape($filename) . "'
+                        AND entity = " . $conf->entity;
+                
+                if ($db->query($sql)) {
+                    $files_removed++;
+                    dol_syslog("Removed orphaned ECM entry: $filename", LOG_INFO);
+                }
+            }
+            
+            return [
+                'success' => true,
+                'message' => "Sync završen uspješno",
+                'files_added' => $files_added,
+                'files_removed' => $files_removed,
+                'total_files' => count($filesystem_files),
+                'is_archived' => $is_archived
+            ];
+            
+        } catch (Exception $e) {
+            dol_syslog("File sync error: " . $e->getMessage(), LOG_ERR);
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get file statistics for a predmet
+     */
+    public static function getFileStats($db, $conf, $predmet_id)
+    {
+        $predmet_id = (int)$predmet_id;
+        
+        // Check if archived
+        $sql = "SELECT lokacija_arhive FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE ID_predmeta = $predmet_id";
+        $resql = $db->query($sql);
+        
+        if ($resql && $obj = $db->fetch_object($resql)) {
+            // Archived predmet
+            $dir_path = DOL_DATA_ROOT . '/ecm/' . $obj->lokacija_arhive;
+            $ecm_filepath = rtrim($obj->lokacija_arhive, '/');
+        } else {
+            // Active predmet
+            $dir_path = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+            $ecm_filepath = 'SEUP/predmet_' . $predmet_id;
+        }
+        
+        // Count filesystem files
+        $filesystem_count = 0;
+        if (is_dir($dir_path)) {
+            $files = array_diff(scandir($dir_path), ['.', '..', 'metadata.json']);
+            $filesystem_count = count($files);
+        }
+        
+        // Count database files
+        $sql = "SELECT COUNT(*) as count FROM " . MAIN_DB_PREFIX . "ecm_files 
+                WHERE filepath = '" . $db->escape($ecm_filepath) . "'
+                AND entity = " . $conf->entity;
+        
+        $resql = $db->query($sql);
+        $database_count = 0;
+        if ($resql && $obj = $db->fetch_object($resql)) {
+            $database_count = (int)$obj->count;
+        }
+        
+        return [
+            'filesystem_count' => $filesystem_count,
+            'database_count' => $database_count,
+            'needs_sync' => ($filesystem_count != $database_count),
+            'directory_path' => $dir_path
+        ];
+    }
 }
