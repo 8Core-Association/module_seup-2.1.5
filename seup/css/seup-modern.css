@@ -282,6 +282,29 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seup-footer-left,
+.seup-footer-right {
+  flex: 1;
+}
+
+.seup-footer-left {
+  text-align: left;
+}
+
+.seup-footer-right {
+  text-align: right;
+}
+
+.seup-version {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  margin: 0;
 }
 
 .seup-footer p {

@@ -570,83 +570,7 @@ print '</div>';
 // Settings grid
 print '<div class="seup-settings-grid">';
 
-// Card 1: Interne oznake korisnika
-print '<div class="seup-settings-card animate-fade-in-up">';
-print '<div class="seup-card-header">';
-print '<div class="seup-card-icon"><i class="fas fa-users"></i></div>';
-print '<h3 class="seup-card-title">Interne Oznake Korisnika</h3>';
-print '<p class="seup-card-description">Upravljanje korisničkim oznakama i radnim mjestima</p>';
-print '</div>';
-print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-form">';
-print '<div class="seup-form-grid">';
-print '<div class="seup-form-group">';
-print '<label for="ime_user" class="seup-label"><i class="fas fa-user me-2"></i>Korisnik</label>';
-print '<select name="ime_user" id="ime_user" class="seup-select" required>';
-print '<option value="">Odaberite korisnika</option>';
-foreach ($listUsers as $u) {
-    print '<option value="' . htmlspecialchars($u->getFullName($langs)) . '">';
-    print htmlspecialchars($u->getFullName($langs));
-    print '</option>';
-}
-print '</select>';
-print '</div>';
-print '<div class="seup-form-group">';
-print '<label for="redni_broj" class="seup-label"><i class="fas fa-hashtag me-2"></i>Redni broj (0-99)</label>';
-print '<input type="number" name="redni_broj" id="redni_broj" class="seup-input" min="0" max="99" required>';
-print '</div>';
-print '</div>';
-print '<div class="seup-form-group">';
-print '<label for="radno_mjesto_korisnika" class="seup-label"><i class="fas fa-briefcase me-2"></i>Radno mjesto</label>';
-print '<input type="text" name="radno_mjesto_korisnika" id="radno_mjesto_korisnika" class="seup-input" required>';
-print '</div>';
-print '<div class="seup-form-actions">';
-print '<button type="submit" name="action_oznaka" value="add" class="seup-btn seup-btn-primary">';
-print '<i class="fas fa-plus me-2"></i>Dodaj';
-print '</button>';
-print '<button type="submit" name="action_oznaka" value="update" class="seup-btn seup-btn-secondary">';
-print '<i class="fas fa-edit me-2"></i>Ažuriraj';
-print '</button>';
-print '<button type="submit" name="action_oznaka" value="delete" class="seup-btn seup-btn-danger">';
-print '<i class="fas fa-trash me-2"></i>Obriši';
-print '</button>';
-print '</div>';
-print '</form>';
-print '</div>';
-
-// Card 2: Oznaka ustanove
-print '<div class="seup-settings-card animate-fade-in-up">';
-print '<div class="seup-card-header">';
-print '<div class="seup-card-icon"><i class="fas fa-building"></i></div>';
-print '<h3 class="seup-card-title">Oznaka Ustanove</h3>';
-print '<p class="seup-card-description">Osnovni podaci o ustanovi i njena identifikacijska oznaka</p>';
-print '</div>';
-print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" id="ustanova-form" class="seup-form">';
-print '<input type="hidden" name="action_ustanova" id="form-action" value="' . ($podaci_postoje ? 'update' : 'add') . '">';
-print '<div id="messageDiv" class="seup-alert d-none" role="alert"></div>';
-print '<div class="seup-form-grid">';
-print '<div class="seup-form-group">';
-print '<label for="code_ustanova" class="seup-label"><i class="fas fa-code me-2"></i>Oznaka (format: 0000-0-0)</label>';
-print '<input type="text" id="code_ustanova" name="code_ustanova" class="seup-input" ';
-print 'pattern="^\d{4}-\d-\d$" placeholder="0000-0-0" required ';
-print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->code_ustanova) : '') . '">';
-print '</div>';
-print '<div class="seup-form-group">';
-print '<label for="name_ustanova" class="seup-label"><i class="fas fa-tag me-2"></i>Naziv ustanove</label>';
-print '<input type="text" id="name_ustanova" name="name_ustanova" class="seup-input" ';
-print 'placeholder="Unesite naziv ustanove" required ';
-print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->name_ustanova) : '') . '">';
-print '</div>';
-print '</div>';
-print '<div class="seup-form-actions">';
-print '<button type="submit" id="ustanova-submit" class="seup-btn seup-btn-primary">';
-print '<i class="fas fa-' . ($podaci_postoje ? 'edit' : 'plus') . ' me-2"></i>';
-print ($podaci_postoje ? 'Ažuriraj' : 'Dodaj');
-print '</button>';
-print '</div>';
-print '</form>';
-print '</div>';
-
-// Card 3: Klasifikacijske oznake (wide card)
+// Card 1: Klasifikacijske oznake (wide card at top)
 print '<div class="seup-settings-card seup-card-wide animate-fade-in-up">';
 print '<div class="seup-card-header">';
 print '<div class="seup-card-icon"><i class="fas fa-sitemap"></i></div>';
@@ -713,6 +637,82 @@ print '</div>';
 print '</form>';
 print '</div>';
 
+// Card 2: Interne oznake korisnika
+print '<div class="seup-settings-card animate-fade-in-up">';
+print '<div class="seup-card-header">';
+print '<div class="seup-card-icon"><i class="fas fa-users"></i></div>';
+print '<h3 class="seup-card-title">Interne Oznake Korisnika</h3>';
+print '<p class="seup-card-description">Upravljanje korisničkim oznakama i radnim mjestima</p>';
+print '</div>';
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-form">';
+print '<div class="seup-form-grid">';
+print '<div class="seup-form-group">';
+print '<label for="ime_user" class="seup-label"><i class="fas fa-user me-2"></i>Korisnik</label>';
+print '<select name="ime_user" id="ime_user" class="seup-select" required>';
+print '<option value="">Odaberite korisnika</option>';
+foreach ($listUsers as $u) {
+    print '<option value="' . htmlspecialchars($u->getFullName($langs)) . '">';
+    print htmlspecialchars($u->getFullName($langs));
+    print '</option>';
+}
+print '</select>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="redni_broj" class="seup-label"><i class="fas fa-hashtag me-2"></i>Redni broj (0-99)</label>';
+print '<input type="number" name="redni_broj" id="redni_broj" class="seup-input" min="0" max="99" required>';
+print '</div>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="radno_mjesto_korisnika" class="seup-label"><i class="fas fa-briefcase me-2"></i>Radno mjesto</label>';
+print '<input type="text" name="radno_mjesto_korisnika" id="radno_mjesto_korisnika" class="seup-input" required>';
+print '</div>';
+print '<div class="seup-form-actions">';
+print '<button type="submit" name="action_oznaka" value="add" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-plus me-2"></i>Dodaj';
+print '</button>';
+print '<button type="submit" name="action_oznaka" value="update" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-edit me-2"></i>Ažuriraj';
+print '</button>';
+print '<button type="submit" name="action_oznaka" value="delete" class="seup-btn seup-btn-danger">';
+print '<i class="fas fa-trash me-2"></i>Obriši';
+print '</button>';
+print '</div>';
+print '</form>';
+print '</div>';
+
+// Card 3: Oznaka ustanove
+print '<div class="seup-settings-card animate-fade-in-up">';
+print '<div class="seup-card-header">';
+print '<div class="seup-card-icon"><i class="fas fa-building"></i></div>';
+print '<h3 class="seup-card-title">Oznaka Ustanove</h3>';
+print '<p class="seup-card-description">Osnovni podaci o ustanovi i njena identifikacijska oznaka</p>';
+print '</div>';
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" id="ustanova-form" class="seup-form">';
+print '<input type="hidden" name="action_ustanova" id="form-action" value="' . ($podaci_postoje ? 'update' : 'add') . '">';
+print '<div id="messageDiv" class="seup-alert d-none" role="alert"></div>';
+print '<div class="seup-form-grid">';
+print '<div class="seup-form-group">';
+print '<label for="code_ustanova" class="seup-label"><i class="fas fa-code me-2"></i>Oznaka (format: 0000-0-0)</label>';
+print '<input type="text" id="code_ustanova" name="code_ustanova" class="seup-input" ';
+print 'pattern="^\d{4}-\d-\d$" placeholder="0000-0-0" required ';
+print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->code_ustanova) : '') . '">';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="name_ustanova" class="seup-label"><i class="fas fa-tag me-2"></i>Naziv ustanove</label>';
+print '<input type="text" id="name_ustanova" name="name_ustanova" class="seup-input" ';
+print 'placeholder="Unesite naziv ustanove" required ';
+print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->name_ustanova) : '') . '">';
+print '</div>';
+print '</div>';
+print '<div class="seup-form-actions">';
+print '<button type="submit" id="ustanova-submit" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-' . ($podaci_postoje ? 'edit' : 'plus') . ' me-2"></i>';
+print ($podaci_postoje ? 'Ažuriraj' : 'Dodaj');
+print '</button>';
+print '</div>';
+print '</form>';
+print '</div>';
+
 print '</div>'; // seup-settings-grid
 
 print '</div>'; // seup-settings-content
@@ -720,7 +720,12 @@ print '</div>'; // seup-settings-content
 // Copyright footer
 print '<footer class="seup-footer">';
 print '<div class="seup-footer-content">';
+print '<div class="seup-footer-left">';
 print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '<div class="seup-footer-right">';
+print '<p class="seup-version">SEUP v.14.0.4</p>';
+print '</div>';
 print '</div>';
 print '</footer>';
 
