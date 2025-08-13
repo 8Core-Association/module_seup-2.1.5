@@ -178,6 +178,24 @@ for ($i = 1; $i <= 10; $i++) {
     print '<option value="' . $i . '">' . $i . ' godina</option>';
 }
 print '</select>';
+print '<select id="filterKlasa" class="seup-filter-select">';
+print '<option value="">Sve klase</option>';
+// Add unique klase from oznake
+$klase = array_unique(array_filter(array_column($oznake, 'klasa_broj')));
+sort($klase);
+foreach ($klase as $klasa) {
+    print '<option value="' . htmlspecialchars($klasa) . '">' . htmlspecialchars($klasa) . '</option>';
+}
+print '</select>';
+print '<select id="filterSadrzaj" class="seup-filter-select">';
+print '<option value="">Svi sadržaji</option>';
+// Add unique sadržaji from oznake
+$sadrzaji = array_unique(array_filter(array_column($oznake, 'sadrzaj')));
+sort($sadrzaji);
+foreach ($sadrzaji as $sadrzaj) {
+    print '<option value="' . htmlspecialchars($sadrzaj) . '">' . htmlspecialchars($sadrzaj) . '</option>';
+}
+print '</select>';
 print '</div>';
 print '</div>';
 
@@ -339,11 +357,15 @@ document.addEventListener("DOMContentLoaded", function() {
     // Enhanced search functionality
     const searchInput = document.getElementById('searchInput');
     const filterVrijeme = document.getElementById('filterVrijeme');
+    const filterKlasa = document.getElementById('filterKlasa');
+    const filterSadrzaj = document.getElementById('filterSadrzaj');
     const tableRows = document.querySelectorAll('.seup-table-row[data-id]');
 
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
         const selectedVrijeme = filterVrijeme.value;
+        const selectedKlasa = filterKlasa.value;
+        const selectedSadrzaj = filterSadrzaj.value;
         let visibleCount = 0;
 
         tableRows.forEach(row => {
@@ -364,7 +386,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             }
 
-            if (matchesSearch && matchesVrijeme) {
+            // Check klasa filter
+            let matchesKlasa = true;
+            if (selectedKlasa) {
+                const klasaCell = cells[1]; // klasa_broj column
+                matchesKlasa = klasaCell.textContent.trim() === selectedKlasa;
+            }
+
+            // Check sadržaj filter
+            let matchesSadrzaj = true;
+            if (selectedSadrzaj) {
+                const sadrzajCell = cells[2]; // sadrzaj column
+                matchesSadrzaj = sadrzajCell.textContent.trim() === selectedSadrzaj;
+            }
+
+            if (matchesSearch && matchesVrijeme && matchesKlasa && matchesSadrzaj) {
                 row.style.display = '';
                 visibleCount++;
             } else {
@@ -385,6 +421,14 @@ document.addEventListener("DOMContentLoaded", function() {
     
     if (filterVrijeme) {
         filterVrijeme.addEventListener('change', filterTable);
+    }
+
+    if (filterKlasa) {
+        filterKlasa.addEventListener('change', filterTable);
+    }
+
+    if (filterSadrzaj) {
+        filterSadrzaj.addEventListener('change', filterTable);
     }
 
     // Enhanced row interactions
