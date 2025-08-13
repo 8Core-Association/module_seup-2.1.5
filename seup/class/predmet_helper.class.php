@@ -421,6 +421,7 @@ class Predmet_helper
                 'sql' => "CREATE TABLE IF NOT EXISTS `" . MAIN_DB_PREFIX . "a_tagovi` (
                 `rowid` INT(11) NOT NULL AUTO_INCREMENT,
                 `tag` VARCHAR(128) NOT NULL,
+                `color` VARCHAR(20) DEFAULT 'blue',
                 `entity` INT(11) NOT NULL DEFAULT 1,
                 `date_creation` DATETIME NOT NULL,
                 `tms` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -549,6 +550,24 @@ class Predmet_helper
 
         // Re-enable foreign key checks
         $db->query('SET FOREIGN_KEY_CHECKS=1');
+        
+        // Add color column to existing a_tagovi table if it doesn't exist
+        $alterTagsTable = MAIN_DB_PREFIX . "a_tagovi";
+        $alterTagsSQL = "ALTER TABLE " . $alterTagsTable . " 
+                     ADD COLUMN color VARCHAR(20) DEFAULT 'blue' AFTER tag";
+
+        // Check if column already exists
+        $res = $db->query("SHOW COLUMNS FROM `$alterTagsTable` LIKE 'color'");
+        if ($res && $db->num_rows($res)) {
+            dol_syslog("Column 'color' already exists in {$alterTagsTable}", LOG_DEBUG);
+        } else {
+            if (!$db->query($alterTagsSQL)) {
+                dol_syslog("Failed to alter table {$alterTagsTable}: " . $db->lasterror(), LOG_ERR);
+                return false;
+            }
+            dol_syslog("Added 'color' column to {$alterTagsTable}", LOG_INFO);
+        }
+
         return true;
     }
 
