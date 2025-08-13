@@ -121,6 +121,9 @@ $sql = "SELECT
         LEFT JOIN " . MAIN_DB_PREFIX . "a_oznaka_ustanove u ON p.ID_ustanove = u.ID_ustanove
         LEFT JOIN " . MAIN_DB_PREFIX . "a_interna_oznaka_korisnika k ON p.ID_interna_oznaka_korisnika = k.ID
         LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+        WHERE p.ID_predmeta NOT IN (
+            SELECT ID_predmeta FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE status_arhive = 'active'
+        )
         {$orderByClause}";
 
 $resql = $db->query($sql);

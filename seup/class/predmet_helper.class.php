@@ -264,20 +264,38 @@ class Predmet_helper
 
     public static function fetchUploadedDocuments($db, $conf, &$documentTableHTML, $langs, $caseId = null)
     {
-        $sql = "SELECT ef.urbroj, ef.filename, ef.filepath, ef.date_c, u.firstname, u.lastname
-        FROM " . MAIN_DB_PREFIX . "ecm_files ef
-        LEFT JOIN " . MAIN_DB_PREFIX . "user u ON ef.fk_user_c = u.rowid
-        WHERE ef.entity = " . ((int) $conf->entity);
-
-        // Add predmet-specific filter if ID is provided
+        // First check if predmet is archived
         if ($caseId) {
-            // Use LIKE instead of exact match to handle trailing slashes
-            $sql .= " AND ef.filepath LIKE 'SEUP/predmet_" . $db->escape($caseId) . "%'";
+            $sql = "SELECT ID_arhive FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE ID_predmeta = " . (int)$caseId;
+            $resql = $db->query($sql);
+            if ($resql && $db->num_rows($resql) > 0) {
+                // Predmet is archived, look in archive location
+                $sql = "SELECT ef.urbroj, ef.filename, ef.filepath, ef.date_c, u.firstname, u.lastname
+                FROM " . MAIN_DB_PREFIX . "ecm_files ef
+                LEFT JOIN " . MAIN_DB_PREFIX . "user u ON ef.fk_user_c = u.rowid
+                WHERE ef.entity = " . ((int) $conf->entity) . "
+                AND ef.filepath LIKE 'SEUP/Arhiva%'
+                AND ef.filepath LIKE '%predmet_" . $db->escape($caseId) . "%'
+                ORDER BY ef.date_c DESC";
+            } else {
+                // Predmet is not archived, look in normal location
+                $sql = "SELECT ef.urbroj, ef.filename, ef.filepath, ef.date_c, u.firstname, u.lastname
+                FROM " . MAIN_DB_PREFIX . "ecm_files ef
+                LEFT JOIN " . MAIN_DB_PREFIX . "user u ON ef.fk_user_c = u.rowid
+                WHERE ef.entity = " . ((int) $conf->entity) . "
+                AND ef.filepath LIKE 'SEUP/predmet_" . $db->escape($caseId) . "%'
+                ORDER BY ef.date_c DESC";
+            }
         } else {
-            $sql .= " AND ef.filepath LIKE 'SEUP%'";
+            // Show all non-archived documents
+            $sql = "SELECT ef.urbroj, ef.filename, ef.filepath, ef.date_c, u.firstname, u.lastname
+            FROM " . MAIN_DB_PREFIX . "ecm_files ef
+            LEFT JOIN " . MAIN_DB_PREFIX . "user u ON ef.fk_user_c = u.rowid
+            WHERE ef.entity = " . ((int) $conf->entity) . "
+            AND ef.filepath LIKE 'SEUP/predmet_%'
+            AND ef.filepath NOT LIKE 'SEUP/Arhiva%'
+            ORDER BY ef.date_c DESC";
         }
-
-        $sql .= " ORDER BY ef.date_c DESC";
 
         dol_syslog("Documents SQL: " . $sql, LOG_DEBUG); // Debugging line
 
@@ -781,7 +799,7 @@ class Predmet_helper
             
             // 5. Update ECM files table
             $sql = "UPDATE " . MAIN_DB_PREFIX . "ecm_files 
-                    SET filepath = 'SEUP/Arhiva/" . $db->escape($predmet->klasa) . "/'
+                    SET filepath = 'SEUP/Arhiva/" . $db->escape($predmet->klasa) . "'
                     WHERE filepath LIKE 'SEUP/predmet_" . $predmet_id . "%'";
             
             if (!$db->query($sql)) {
