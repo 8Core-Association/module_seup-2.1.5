@@ -150,9 +150,10 @@ if ($resql) {
 
 $availableTagsHTML = '';
 foreach ($tags as $tag) {
-  $availableTagsHTML .= '<div class="seup-tag-option" data-tag-id="' . $tag->rowid . '">';
-  $availableTagsHTML .= '<i class="fas fa-tag me-2"></i>' . htmlspecialchars($tag->tag);
-  $availableTagsHTML .= '</div>';
+  $availableTagsHTML .= '<button type="button" class="btn btn-sm btn-outline-primary tag-option" 
+                          data-tag-id="' . $tag->rowid . '">';
+  $availableTagsHTML .= htmlspecialchars($tag->tag);
+  $availableTagsHTML .= '</button>';
 }
 
 // Potrebno za kreiranje klase predmeta
@@ -164,941 +165,162 @@ $code_ustanova = '';
 $klasa_text = 'KLASA: OZN-SAD/GOD-DOS/RBR';
 $klasaMapJson = '';
 
-Predmet_helper::fetchDropdownData($db, $langs, $klasaOptions, $zaposlenikOptions, $klasaMapJson);
+Predmet_helper::fetchDropdownData($db, $langs, $klasaOptions, $klasaMapJson, $zaposlenikOptions);
 
-// Modern design assets
+
+// === BOOTSTRAP CDN DODAVANJE ===
+// Meta tag za responzivnost
 print '<meta name="viewport" content="width=device-width, initial-scale=1">';
-print '<link rel="preconnect" href="https://fonts.googleapis.com">';
-print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
-print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
-print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
-print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
-print '<link href="/custom/seup/css/novi-predmet.css" rel="stylesheet">';
+// Bootstrap CSS
+print '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">';
+// Add flatpickr CDN links
+print '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
+print '<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>';
+print '<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/hr.js"></script>';
+
+// Create single input fields for dates
+$strankaDateHTML = '<input type="text" class="form-control flatpickr-date" name="strankaDatumOtvaranja" placeholder="Odaberi datum">';
+$datumOtvaranjaHTML = '<input type="text" class="form-control flatpickr-date" name="datumOtvaranja" placeholder="Odaberi datum">';
+
+
+// Custom style 8Core
+print '<link href="/custom/seup/css/style.css" rel="stylesheet">';
+
 print '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
-print '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>';
 print '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
 
-// Main hero section
-print '<main class="seup-settings-hero">';
+//Kec ispod ovoga ti je sve što ti treba //
 
-// Copyright footer
-print '<footer class="seup-footer">';
-print '<div class="seup-footer-content">';
-print '<div class="seup-footer-left">';
-print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
-print '</div>';
-print '<div class="seup-footer-right">';
-print '<p class="seup-version">SEUP v.14.0.4</p>';
-print '</div>';
-print '</div>';
-print '</footer>';
+print '<div class="container mt-5 shadow-sm p-3 mb-5 bg-body rounded">';
 
-// Floating background elements
-print '<div class="seup-floating-elements">';
-for ($i = 1; $i <= 5; $i++) {
-    print '<div class="seup-floating-element"></div>';
-}
-print '</div>';
 
-print '<div class="seup-settings-content">';
+$htmlContent = <<<HTML
+<div class="container mt-5 shadow-sm p-3 mb-5 bg-body rounded">
+    <h4 class="mb-3">Klasa</h4>
+    <p id="klasa-value">$klasa_text</p>
+    
+    <div class="row g-3 mt-3">
+      <div class="col-md-6">
+        <div class="p-3 border rounded h-100">
+          <h5 class="mb-3">Odabir parametara klase</h5>
+          
+          <div class="mb-3">
+            <label for="klasa_br">{$langs->trans("Klasa broj")}:</label>
+            <select name="klasa_br" id="klasa_br" class="form-select">
+              $klasaOptions
+            </select>
+          </div>
 
-// Header section
-print '<div class="seup-settings-header">';
-print '<h1 class="seup-settings-title">Novi Predmet</h1>';
-print '<p class="seup-settings-subtitle">Kreirajte novi predmet s klasifikacijskim oznakama i povezanim dokumentima</p>';
-print '</div>';
+          <div class="mb-3">
+            <label for="sadrzaj">{$langs->trans("Sadrzaj")}:</label>
+            <select name="sadrzaj" id="sadrzaj" class="form-select" data-placeholder="{$langs->trans("Odaberi Sadrzaj")}">
+              <option value="">{$langs->trans("Odaberi Sadrzaj")}</option>
+            </select>
+          </div>
 
-// Klasa display section
-print '<div class="seup-klasa-display animate-fade-in-up">';
-print '<div class="seup-klasa-content">';
-print '<div class="seup-klasa-icon"><i class="fas fa-tag"></i></div>';
-print '<div class="seup-klasa-text">';
-print '<h4 class="seup-klasa-title">Trenutna Klasa</h4>';
-print '<p id="klasa-value" class="seup-klasa-value">' . $klasa_text . '</p>';
-print '</div>';
-print '</div>';
-print '</div>';
+          <div class="mb-3">
+            <label for="dosjeBroj">{$langs->trans("Dosje Broj")}:</label>
+            <select name="dosjeBroj" id="dosjeBroj" class="form-select" data-placeholder="{$langs->trans("Odaberi Dosje Broj")}">
+              <option value="">{$langs->trans("Odaberi Dosje Broj")}</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="zaposlenik" class="form-label">{$langs->trans("Zaposlenik")}</label>
+            <select class="form-select text-black" id="zaposlenik" name="zaposlenik" required>
+              $zaposlenikOptions
+            </select>
+          </div>
 
-// Form grid
-print '<div class="seup-form-container">';
+          <div class="mb-3">
+            <label for="stranka" class="form-label">{$langs->trans("Stranka")}</label>
+            <div class="d-flex align-items-center gap-2">
+                <select class="form-select" id="stranka" name="stranka" disabled style="flex:4;"></select>
+                <div class="d-flex align-items-center match-height" style="flex: 1;">
+                    <input type="checkbox" class="btn-check" id="strankaCheck" autocomplete="off">
+                    <label class="btn btn-outline-secondary w-100 text-nowrap d-flex align-items-center justify-content-center" 
+                          for="strankaCheck" id="strankaCheckLabel" 
+                          style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                        Otvorila stranka?
+                    </label>
+                </div>
+            </div>
+            <div id="strankaDatumContainer" class="mt-2" style="display:none;">
+              <label for="strankaDatumOtvaranja" class="form-label">Datum otvaranja predmeta od strane stranke</label>
+              <div class="mb-1">
+              $strankaDateHTML
+              </div>
+              <div id="strankaDateError" class="invalid-feedback" style="display: none;">
+                  Odaberite datum otvaranja predmeta!
+              </div>
+            </div>
+            <div id="strankaError" class="invalid-feedback" style="display: none;">
+                Odaberite stranku! (Required when checkbox is checked)
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="p-3 border rounded h-100 bg-light">
+          <label for="naziv" class="form-label h5">Naziv Predmeta</label>
+          <textarea class="form-control" id="naziv" name="naziv" rows="8" maxlength="500" placeholder="Unesite naziv predmeta (maksimalno 500 znakova)" style="resize: none;"></textarea>
+          <div class="mt-3">
+            <label for="datumOtvaranja" class="form-label">Datum Otvaranja Predmeta</label>
+            <div class="mb-1">
+              $datumOtvaranjaHTML
+            </div>
+            <small class="form-text text-muted">Ostavite prazno za današnji datum</small>
+          </div>
+          <div class="mt-3">
+              <label class="form-label">{$langs->trans('Oznake')}</label>
+              <div class="input-group mb-2">
+                  <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
+                          type="button" 
+                          id="tagsDropdown" 
+                          data-bs-toggle="dropdown" 
+                          aria-expanded="false">
+                      Odaberi oznake
+                  </button>
+                  <div class="dropdown-menu p-2" aria-labelledby="tagsDropdown" style="width: 100%">
+                      <div class="d-flex flex-wrap gap-1" id="available-tags">
+                          {$availableTagsHTML}
+                      </div>
+                  </div>
+                  <button class="btn btn-outline-primary" type="button" id="add-tag-btn">
+                      Dodaj
+                  </button>
+              </div>
+              <div class="d-flex flex-wrap gap-1 mt-2" id="selected-tags"></div>
+          </div>
+        </div> <!-- end p-3 border -->
+      </div> <!-- end col-md-6 -->
+    </div> <!-- end row -->
+    
+    <div class="mt-3 d-flex gap-2">
+      <div class="mt-3">
+          <button type="button" class="btn btn-primary btn-sm" id="otvoriPredmetBtn">Otvori Predmet</button>
+      </div>
+    </div>
+</div>
+HTML;
 
-// Left column - Form fields
-print '<div class="seup-settings-card animate-fade-in-up">';
-print '<div class="seup-card-header">';
-print '<div class="seup-card-icon"><i class="fas fa-edit"></i></div>';
-print '<h3 class="seup-card-title">Parametri Predmeta</h3>';
-print '<p class="seup-card-description">Odaberite klasifikacijske oznake i osnovne podatke</p>';
-print '</div>';
+// Print the HTML content
+print $htmlContent;
 
-print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-form">';
 
-print '<div class="seup-form-grid seup-grid-3">';
-print '<div class="seup-form-group">';
-print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group me-2"></i>Klasa broj</label>';
-print '<select name="klasa_br" id="klasa_br" class="seup-select">';
-print $klasaOptions;
-print '</select>';
-print '</div>';
+// Ne diraj dalje ispod ništa ne mjenjaj dole je samo bootstrap cdn java scripta i dolibarr footer postavke kao što vidiš//
 
-print '<div class="seup-form-group">';
-print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list me-2"></i>Sadržaj</label>';
-print '<select name="sadrzaj" id="sadrzaj" class="seup-select" data-placeholder="' . $langs->trans("Odaberi Sadrzaj") . '">';
-print '<option value="">' . $langs->trans("Odaberi Sadrzaj") . '</option>';
-print '</select>';
-print '</div>';
-
-print '<div class="seup-form-group">';
-print '<label for="dosjeBroj" class="seup-label"><i class="fas fa-folder me-2"></i>Dosje broj</label>';
-print '<select name="dosjeBroj" id="dosjeBroj" class="seup-select" data-placeholder="' . $langs->trans("Odaberi Dosje Broj") . '">';
-print '<option value="">' . $langs->trans("Odaberi Dosje Broj") . '</option>';
-print '</select>';
-print '</div>';
-print '</div>';
-
-print '<div class="seup-form-grid">';
-print '<div class="seup-form-group">';
-print '<label for="zaposlenik" class="seup-label"><i class="fas fa-user me-2"></i>Zaposlenik</label>';
-print '<select class="seup-select" id="zaposlenik" name="zaposlenik" required>';
-print $zaposlenikOptions;
-print '</select>';
-print '</div>';
-
-print '<div class="seup-form-group">';
-print '<label for="stranka" class="seup-label"><i class="fas fa-building me-2"></i>Stranka</label>';
-print '<div class="seup-stranka-container">';
-print '<select class="seup-select" id="stranka" name="stranka" disabled style="flex:1;"></select>';
-print '<div class="seup-checkbox-container">';
-print '<input type="checkbox" class="seup-checkbox" id="strankaCheck" autocomplete="off">';
-print '<label class="seup-checkbox-label" for="strankaCheck">';
-print '<i class="fas fa-user-check me-2"></i>Otvorila stranka?';
-print '</label>';
-print '</div>';
-print '</div>';
-
-// Hidden date containers
-print '<div id="strankaDatumContainer" class="seup-date-container" style="display:none;">';
-print '<label class="seup-label"><i class="fas fa-calendar me-2"></i>Datum otvaranja od strane stranke</label>';
-print '<button type="button" class="seup-date-btn" id="strankaDatumBtn">';
-print '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-print '</button>';
-print '<input type="hidden" name="strankaDatumOtvaranja" id="strankaDatumValue">';
-print '<div id="strankaDateError" class="seup-error-message" style="display: none;">Odaberite datum otvaranja predmeta!</div>';
-print '</div>';
-
-print '<div id="strankaError" class="seup-error-message" style="display: none;">Odaberite stranku!</div>';
-print '</div>';
-print '</div>';
-
-print '</form>';
-print '</div>';
-
-// Right column - Case details
-print '<div class="seup-settings-card animate-fade-in-up">';
-print '<div class="seup-card-header">';
-print '<div class="seup-card-icon"><i class="fas fa-file-alt"></i></div>';
-print '<h3 class="seup-card-title">Detalji Predmeta</h3>';
-print '<p class="seup-card-description">Naziv, datum i oznake predmeta</p>';
-print '</div>';
-
-print '<div class="seup-form">';
-print '<div class="seup-form-group">';
-print '<label for="naziv" class="seup-label"><i class="fas fa-heading me-2"></i>Naziv Predmeta</label>';
-print '<textarea class="seup-textarea" id="naziv" name="naziv" rows="4" maxlength="500" placeholder="Unesite naziv predmeta (maksimalno 500 znakova)"></textarea>';
-print '<div class="seup-char-counter">';
-print '<span id="charCount">0</span>/500 znakova';
-print '</div>';
-print '</div>';
-
-print '<div class="seup-form-group">';
-print '<label class="seup-label"><i class="fas fa-calendar me-2"></i>Datum Otvaranja Predmeta</label>';
-print '<button type="button" class="seup-date-btn" id="datumOtvaranjaBtn">';
-print '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-print '</button>';
-print '<input type="hidden" name="datumOtvaranja" id="datumOtvaranjaValue">';
-print '<small class="seup-help-text">Ostavite prazno za današnji datum</small>';
-print '</div>';
-
-print '<div class="seup-form-group">';
-print '<label class="seup-label"><i class="fas fa-tags me-2"></i>Oznake</label>';
-print '<button type="button" class="seup-tags-btn" id="tagsBtn">';
-print '<i class="fas fa-tags me-2"></i>Odaberi oznake';
-print '</button>';
-print '<div class="seup-selected-tags" id="selected-tags"></div>';
-print '</div>';
-
-print '<div class="seup-form-actions">';
-print '<button type="button" class="seup-btn seup-btn-primary" id="otvoriPredmetBtn">';
-print '<i class="fas fa-plus me-2"></i>Otvori Predmet';
-print '</button>';
-print '</div>';
-
-print '</div>';
-print '</div>';
-
-print '</div>'; // seup-form-container
-
-print '</div>'; // seup-settings-content
-
-print '</main>';
-
-// Date Picker Modal
-print '<div id="dateModal" class="seup-modal">';
-print '<div class="seup-modal-content">';
-print '<div class="seup-modal-header">';
-print '<h4 class="seup-modal-title"><i class="fas fa-calendar me-2"></i>Odaberi Datum</h4>';
-print '<button type="button" class="seup-modal-close" id="closeDateModal">';
-print '<i class="fas fa-times"></i>';
-print '</button>';
-print '</div>';
-print '<div class="seup-modal-body">';
-print '<div id="calendar-container"></div>';
-print '</div>';
-print '<div class="seup-modal-footer">';
-print '<button type="button" class="seup-btn seup-btn-secondary" id="cancelDate">Odustani</button>';
-print '<button type="button" class="seup-btn seup-btn-primary" id="confirmDate">Potvrdi</button>';
-print '</div>';
-print '</div>';
-print '</div>';
-
-// Tags Modal
-print '<div id="tagsModal" class="seup-modal">';
-print '<div class="seup-modal-content">';
-print '<div class="seup-modal-header">';
-print '<h4 class="seup-modal-title"><i class="fas fa-tags me-2"></i>Odaberi Oznake</h4>';
-print '<button type="button" class="seup-modal-close" id="closeTagsModal">';
-print '<i class="fas fa-times"></i>';
-print '</button>';
-print '</div>';
-print '<div class="seup-modal-body">';
-print '<div class="seup-tags-grid" id="available-tags">';
-print $availableTagsHTML;
-print '</div>';
-print '</div>';
-print '<div class="seup-modal-footer">';
-print '<button type="button" class="seup-btn seup-btn-secondary" id="cancelTags">Odustani</button>';
-print '<button type="button" class="seup-btn seup-btn-primary" id="confirmTags">Potvrdi</button>';
-print '</div>';
-print '</div>';
-print '</div>';
-
-// JavaScript for enhanced functionality
-print '<script src="/custom/seup/js/seup-modern.js"></script>';
-
+// Bootstrap JS bundle (uključuje Popper)
+print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>';
+// End of page
+llxFooter();
+$db->close();
+// TODO add Tagovi polje nakon implementacije
 ?>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Get the select elements and klasa value element
-    const klasaMap = JSON.parse('<?php echo $klasaMapJson; ?>');
-    console.log("KlasaMap loaded:", klasaMap);
-    
-    var klasaSelect = document.getElementById("klasa_br");
-    var sadrzajSelect = document.getElementById("sadrzaj");
-    const dosjeSelect = document.getElementById("dosjeBroj");
-    var zaposlenikSelect = document.getElementById("zaposlenik");
-    var klasaValue = document.getElementById("klasa-value");
-    const otvoriPredmetBtn = document.getElementById("otvoriPredmetBtn");
-
-    // Character counter for naziv
-    const nazivTextarea = document.getElementById("naziv");
-    const charCount = document.getElementById("charCount");
-    const charCounter = document.querySelector(".seup-char-counter");
-
-    if (nazivTextarea && charCount) {
-        nazivTextarea.addEventListener("input", function() {
-            const count = this.value.length;
-            charCount.textContent = count;
-            
-            charCounter.classList.remove("warning", "danger");
-            if (count > 400) {
-                charCounter.classList.add("danger");
-            } else if (count > 300) {
-                charCounter.classList.add("warning");
-            }
-        });
-    }
-
-    // Modal functionality
-    const dateModal = document.getElementById("dateModal");
-    const tagsModal = document.getElementById("tagsModal");
-    let currentDateTarget = null;
-    let selectedTags = new Set();
-    let tempSelectedTags = new Set();
-    let selectedDate = null;
-
-    // Date picker functionality
-    document.getElementById("datumOtvaranjaBtn").addEventListener("click", function() {
-        currentDateTarget = "datumOtvaranja";
-        showDateModal();
-    });
-
-    document.getElementById("strankaDatumBtn").addEventListener("click", function() {
-        currentDateTarget = "strankaDatum";
-        showDateModal();
-    });
-
-    // Tags functionality
-    document.getElementById("tagsBtn").addEventListener("click", function() {
-        tempSelectedTags = new Set(selectedTags);
-        updateTagsModal();
-        showTagsModal();
-    });
-
-    function showDateModal() {
-        dateModal.classList.add("show");
-        initCalendar();
-    }
-
-    function hideDateModal() {
-        dateModal.classList.remove("show");
-    }
-
-    function showTagsModal() {
-        tagsModal.classList.add("show");
-    }
-
-    function hideTagsModal() {
-        tagsModal.classList.remove("show");
-    }
-
-    function initCalendar() {
-        const container = document.getElementById("calendar-container");
-        const today = new Date();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        
-        container.innerHTML = createCalendarHTML(currentYear, currentMonth);
-        
-        // Add click handlers to dates
-        container.querySelectorAll(".calendar-date").forEach(date => {
-            date.addEventListener("click", function() {
-                container.querySelectorAll(".calendar-date").forEach(d => d.classList.remove("selected"));
-                this.classList.add("selected");
-                selectedDate = this.dataset.date;
-            });
-        });
-    }
-
-    function createCalendarHTML(year, month) {
-        const monthNames = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
-                           "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
-        
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        let html = `
-            <div class="calendar-header">
-                <h5>${monthNames[month]} ${year}</h5>
-            </div>
-            <div class="calendar-grid">
-                <div class="calendar-day-header">Pon</div>
-                <div class="calendar-day-header">Uto</div>
-                <div class="calendar-day-header">Sri</div>
-                <div class="calendar-day-header">Čet</div>
-                <div class="calendar-day-header">Pet</div>
-                <div class="calendar-day-header">Sub</div>
-                <div class="calendar-day-header">Ned</div>
-        `;
-        
-        // Empty cells for days before month starts
-        for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
-            html += '<div class="calendar-empty"></div>';
-        }
-        
-        // Days of the month
-        for (let day = 1; day <= daysInMonth; day++) {
-            const isToday = (day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
-            html += `<div class="calendar-date ${isToday ? 'today' : ''}" data-date="${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}">${day}</div>`;
-        }
-        
-        html += '</div>';
-        return html;
-    }
-
-    function updateTagsModal() {
-        document.querySelectorAll(".seup-tag-option").forEach(tag => {
-            const tagId = tag.dataset.tagId;
-            if (tempSelectedTags.has(tagId)) {
-                tag.classList.add("selected");
-            } else {
-                tag.classList.remove("selected");
-            }
-        });
-    }
-
-    function updateSelectedTagsDisplay() {
-        const container = document.getElementById("selected-tags");
-        container.innerHTML = "";
-        
-        selectedTags.forEach(tagId => {
-            const tagElement = document.querySelector(`[data-tag-id="${tagId}"]`);
-            if (tagElement) {
-                const tagName = tagElement.textContent.trim();
-                const tagBadge = document.createElement("div");
-                tagBadge.className = "seup-selected-tag";
-                tagBadge.innerHTML = `
-                    <i class="fas fa-tag me-1"></i>
-                    ${tagName}
-                    <button type="button" class="seup-tag-remove" data-tag-id="${tagId}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                container.appendChild(tagBadge);
-            }
-        });
-        
-        // Update button text
-        const tagsBtn = document.getElementById("tagsBtn");
-        if (selectedTags.size > 0) {
-            tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odabrano: ${selectedTags.size} oznaka`;
-            tagsBtn.classList.add("selected");
-        } else {
-            tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odaberi oznake`;
-            tagsBtn.classList.remove("selected");
-        }
-    }
-
-    // Modal event listeners
-    document.getElementById("closeDateModal").addEventListener("click", hideDateModal);
-    document.getElementById("cancelDate").addEventListener("click", hideDateModal);
-    document.getElementById("closeTagsModal").addEventListener("click", hideTagsModal);
-    document.getElementById("cancelTags").addEventListener("click", hideTagsModal);
-
-    document.getElementById("confirmDate").addEventListener("click", function() {
-        if (selectedDate) {
-            const [year, month, day] = selectedDate.split("-");
-            const formattedDate = `${day}.${month}.${year}`;
-            
-            if (currentDateTarget === "datumOtvaranja") {
-                document.getElementById("datumOtvaranjaValue").value = selectedDate;
-                document.getElementById("datumOtvaranjaBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
-                document.getElementById("datumOtvaranjaBtn").classList.add("selected");
-            } else if (currentDateTarget === "strankaDatum") {
-                document.getElementById("strankaDatumValue").value = selectedDate;
-                document.getElementById("strankaDatumBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
-                document.getElementById("strankaDatumBtn").classList.add("selected");
-            }
-        }
-        hideDateModal();
-    });
-
-    document.getElementById("confirmTags").addEventListener("click", function() {
-        selectedTags = new Set(tempSelectedTags);
-        updateSelectedTagsDisplay();
-        hideTagsModal();
-    });
-
-    // Tag selection in modal
-    document.addEventListener("click", function(e) {
-        if (e.target.closest(".seup-tag-option")) {
-            const tagOption = e.target.closest(".seup-tag-option");
-            const tagId = tagOption.dataset.tagId;
-            
-            if (tempSelectedTags.has(tagId)) {
-                tempSelectedTags.delete(tagId);
-                tagOption.classList.remove("selected");
-            } else {
-                tempSelectedTags.add(tagId);
-                tagOption.classList.add("selected");
-            }
-        }
-        
-        // Remove tag from selected
-        if (e.target.closest(".seup-tag-remove")) {
-            const tagId = e.target.closest(".seup-tag-remove").dataset.tagId;
-            selectedTags.delete(tagId);
-            updateSelectedTagsDisplay();
-        }
-    });
-
-    // Close modals on outside click
-    window.addEventListener("click", function(e) {
-        if (e.target === dateModal) hideDateModal();
-        if (e.target === tagsModal) hideTagsModal();
-    });
-
-    // Stranka autocomplete functionality
-    const strankaInput = document.getElementById('stranka');
-    let lastSearchTerm = '';
-
-    document.getElementById('strankaCheck').addEventListener('change', function() {
-        const selectField = document.getElementById('stranka');
-        const errorDiv = document.getElementById('strankaError');
-        const container = document.getElementById('strankaDatumContainer');
-
-        if (this.checked) {
-            selectField.disabled = false;
-            selectField.required = true;
-
-            if (!selectField.hasAttribute('data-select2-id')) {
-                jQuery(selectField).select2({
-                    placeholder: "OIB ili naziv stranke",
-                    allowClear: true,
-                    ajax: {
-                        url: 'novi_predmet.php?ajax=autocomplete_stranka',
-                        dataType: 'json',
-                        delay: 300,
-                        data: function(params) {
-                            return { term: params.term };
-                        },
-                        processResults: function(data) {
-                            return {
-                                results: data.map(item => ({
-                                    id: item.label,
-                                    text: item.label + (item.vat ? ' (' + item.vat + ')' : '')
-                                }))
-                            };
-                        },
-                        cache: true
-                    },
-                    minimumInputLength: 2
-                });
-            }
-
-            errorDiv.style.display = 'none';
-            selectField.classList.remove('is-invalid');
-            container.style.display = 'block';
-            selectField.focus();
-        } else {
-            if (selectField.hasAttribute('data-select2-id')) {
-                $(selectField).select2('destroy');
-            }
-            selectField.disabled = true;
-            selectField.required = false;
-            selectField.innerHTML = '';
-            errorDiv.style.display = 'none';
-            selectField.classList.remove('is-invalid');
-            container.style.display = 'none';
-            
-            // Clear date
-            document.getElementById("strankaDatumValue").value = '';
-            document.getElementById("strankaDatumBtn").innerHTML = '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-            document.getElementById("strankaDatumBtn").classList.remove("selected");
-        }
-    });
-
-    // Check if elements are present
-    if (!klasaSelect || !sadrzajSelect || !zaposlenikSelect || !klasaValue) {
-        console.error("Required elements not found in DOM.");
-        return;
-    }
-
-    var klasaText = <?php echo json_encode($klasa_text); ?>;
-
-    // State for keeping track of current values
-    var currentValues = {
-        klasa: "",
-        sadrzaj: "",
-        dosje: "",
-        rbr: "1"
-    };
-
-    let year = new Date().getFullYear();
-    year = year.toString().slice(-2);
-
-    function updateKlasaValue() {
-        const klasa = currentValues.klasa || "OZN";
-        const sadrzaj = currentValues.sadrzaj || "SAD";
-        const selectedDosje = dosjeSelect.value || "DOS";
-        const rbr = currentValues.rbr || "1";
-
-        const updatedText = `KLASA: ${klasa}-${sadrzaj}/${year}-${selectedDosje}/${rbr}`;
-        klasaValue.textContent = updatedText;
-    }
-
-    function checkIfPredmetExists() {
-        var klasa = klasaSelect.value || "OZN";
-        var sadrzaj = sadrzajSelect.value || "SAD";
-        var dosje_br = dosjeSelect.value || "DOS";
-        
-        if (klasa !== "OZN" && sadrzaj !== "SAD" && dosje_br !== "DOS") {
-            fetch(
-                "novi_predmet.php?ajax=1&" +
-                "klasa_br=" + encodeURIComponent(klasa) +
-                "&sadrzaj=" + encodeURIComponent(sadrzaj) +
-                "&dosje_br=" + encodeURIComponent(dosje_br) +
-                "&god=" + encodeURIComponent(year), {
-                    headers: { "Accept": "application/json" }
-                }
-            )
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "exists" || data.status === "inserted") {
-                    currentValues.rbr = data.next_rbr;
-                    updateKlasaValue();
-                }
-            })
-            .catch(error => console.error("Error checking predmet:", error));
-        }
-    }
-
-    function resetKlasaDisplay() {
-        currentValues = { klasa: "", sadrzaj: "", dosje: "", rbr: "1", zaposlenik: "" };
-        klasaSelect.value = "";
-        sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
-        dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
-        zaposlenikSelect.value = "";
-        updateKlasaValue();
-    }
-
-    // Update on klasa change
-    if (klasaSelect) {
-        klasaSelect.addEventListener("change", function() {
-            currentValues.klasa = this.value || "";
-            currentValues.dosje = "";
-
-            sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
-            dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
-
-            if (this.value && klasaMap[this.value]) {
-                const sadrzajValues = Object.keys(klasaMap[this.value]);
-                sadrzajValues.forEach(sadrzaj => {
-                    const option = new Option(sadrzaj, sadrzaj);
-                    sadrzajSelect.appendChild(option);
-                });
-            }
-
-            updateKlasaValue();
-            checkIfPredmetExists();
-        });
-    }
-
-    // Update on sadrzaj change
-    if (sadrzajSelect) {
-        sadrzajSelect.addEventListener("change", function() {
-            dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
-            currentValues.sadrzaj = this.value || "SAD";
-            currentValues.dosje = "";
-
-            const klasa = klasaSelect.value;
-            const sadrzaj = this.value;
-            
-            if (klasa && sadrzaj && klasaMap[klasa] && klasaMap[klasa][sadrzaj]) {
-                klasaMap[klasa][sadrzaj].forEach(dosje => {
-                    const option = new Option(dosje, dosje);
-                    dosjeSelect.appendChild(option);
-                });
-            }
-            updateKlasaValue();
-            checkIfPredmetExists();
-        });
-    }
-
-    if (dosjeSelect) {
-        dosjeSelect.addEventListener("change", function() {
-            currentValues.dosje = this.value || "";
-            updateKlasaValue();
-            checkIfPredmetExists();
-        });
-    }
-
-    // Submit handler
-    otvoriPredmetBtn.addEventListener("click", function() {
-        const klasa = klasaSelect.value;
-        const sadrzaj = sadrzajSelect.value;
-        const dosje = dosjeSelect.value;
-        const zaposlenik = zaposlenikSelect.value;
-        const naziv = document.getElementById("naziv").value;
-
-        const strankaCheckbox = document.getElementById('strankaCheck');
-        const strankaField = document.getElementById('stranka');
-        const strankaError = document.getElementById('strankaError');
-
-        strankaField.classList.remove('is-invalid');
-        strankaError.style.display = 'none';
-
-        let isValid = true;
-        const missingFields = [];
-
-        if (!klasa) missingFields.push("Klasa broj");
-        if (!sadrzaj) missingFields.push("Sadržaj");
-        if (!dosje) missingFields.push("Dosje broj");
-        if (!zaposlenik) missingFields.push("Zaposlenik");
-        if (!naziv.trim()) missingFields.push("Naziv predmeta");
-
-        const strankaDateError = document.getElementById('strankaDateError');
-        if (strankaDateError) {
-            strankaDateError.style.display = 'none';
-        }
-
-        if (strankaCheckbox.checked) {
-            if (!strankaField.value) {
-                isValid = false;
-                strankaField.classList.add('is-invalid');
-                strankaError.style.display = 'block';
-                strankaField.focus();
-            }
-
-            const strankaDateValue = document.getElementById('strankaDatumValue').value;
-            if (!strankaDateValue) {
-                isValid = false;
-                if (strankaDateError) {
-                    strankaDateError.style.display = 'block';
-                }
-            }
-        }
-
-        if (missingFields.length > 0) {
-            isValid = false;
-            const errorMessage = "Molimo vas da popunite sva obavezna polja:\n\n" +
-                missingFields.map(field => `- ${field}`).join("\n");
-            alert(errorMessage);
-        }
-
-        if (!isValid) {
-            return;
-        }
-
-        // Add loading state
-        this.classList.add('seup-loading');
-        this.disabled = true;
-
-        const formData = new FormData();
-        formData.append("action", "otvori_predmet");
-        formData.append("klasa_br", klasa);
-        formData.append("sadrzaj", sadrzaj);
-        formData.append("dosje_broj", dosje);
-        formData.append("zaposlenik", zaposlenik);
-        formData.append("god", year);
-        formData.append("naziv", naziv);
-
-        if (strankaCheckbox.checked) {
-            formData.append("stranka", strankaField.value.trim());
-            const strankaDateValue = document.getElementById('strankaDatumValue').value;
-            if (strankaDateValue) {
-                formData.append("strankaDatumOtvaranja", strankaDateValue);
-            }
-        }
-
-        const datumValue = document.getElementById('datumOtvaranjaValue').value;
-        let datumOtvaranjaTimestamp = null;
-
-        if (datumValue) {
-            const now = new Date();
-            datumOtvaranjaTimestamp = `${datumValue} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        } else {
-            datumOtvaranjaTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        }
-  justify-content: center;
-  border-radius: 50%;
-  transition: all var(--transition-fast);
-}
-
-.seup-tag-remove:hover {
-  background: var(--accent-200);
-  color: var(--accent-800);
-}
-
-/* Character Counter */
-.seup-char-counter {
-  text-align: right;
-  font-size: var(--text-xs);
-  color: var(--secondary-500);
-  margin-top: var(--space-1);
-}
-
-.seup-char-counter.warning {
-  color: var(--warning-600);
-}
-
-.seup-char-counter.danger {
-  color: var(--error-600);
-}
-
-/* Help Text */
-.seup-help-text {
-  font-size: var(--text-xs);
-  color: var(--secondary-500);
-  margin-top: var(--space-1);
-  display: flex;
-  align-items: center;
-}
-
-/* Error Messages */
-.seup-error-message {
-  color: var(--error-600);
-  font-size: var(--text-xs);
-  margin-top: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.seup-error-message::before {
-  content: '\f071';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
-}
-
-/* Modal Styles */
-.seup-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: var(--z-modal);
-  align-items: center;
-  justify-content: center;
-}
-
-.seup-modal.show {
-  display: flex;
-}
-
-.seup-modal-content {
-  background: white;
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-2xl);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-.seup-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-6);
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  color: white;
-}
-
-.seup-modal-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  margin: 0;
-}
-
-.seup-modal-close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: var(--text-lg);
-  cursor: pointer;
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
-}
-
-.seup-modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.seup-modal-body {
-  padding: var(--space-6);
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.seup-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  padding: var(--space-6);
-  background: var(--neutral-50);
-  border-top: 1px solid var(--neutral-200);
-}
-
-/* Calendar Styles */
-#calendar-container {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-}
-
-/* Tags Grid */
-.seup-tags-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--space-3);
-}
-
-.seup-tag-option {
-  padding: var(--space-3);
-  border: 1px solid var(--neutral-300);
-  border-radius: var(--radius-lg);
-  background: white;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--secondary-700);
-}
-
-.seup-tag-option:hover {
-  border-color: var(--accent-500);
-  background: var(--accent-50);
-  color: var(--accent-700);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.seup-tag-option.selected {
-  background: var(--accent-500);
-  color: white;
-  border-color: var(--accent-500);
-}
-
-/* Animations */
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .seup-form-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .seup-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .seup-klasa-content {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .seup-form-grid,
-  .seup-grid-3 {
-    grid-template-columns: 1fr;
-  }
-  
-  .seup-stranka-container {
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  
-  .seup-modal-content {
-    width: 95%;
-    margin: var(--space-4);
-  }
-  
-  .seup-tags-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
-
 <script type="text/javascript">
-  // Override da se u dropdownu prikazuje hrvatski jezik za placeholder text
+  // override da se u dropdownu prikazuje hrvatski jezik za placeholder text
   jQuery.fn.select2.defaults.set('language', {
     inputTooShort: function(args) {
       return "Unesite barem 2 znaka za pretraživanje";
@@ -1107,9 +329,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   document.addEventListener("DOMContentLoaded", function() {
     // Get the select elements and klasa value element
+    const dataHolder = document.getElementById("phpDataHolder");
     const klasaMap = JSON.parse('<?php echo $klasaMapJson; ?>');
-    console.log("KlasaMap loaded:", klasaMap);
-    
+    console.log("KlasaMap loaded:", klasaMap); // For debugging
     var klasaSelect = document.getElementById("klasa_br");
     var sadrzajSelect = document.getElementById("sadrzaj");
     const dosjeSelect = document.getElementById("dosjeBroj");
@@ -1117,237 +339,37 @@ document.addEventListener("DOMContentLoaded", function() {
     var klasaValue = document.getElementById("klasa-value");
     const otvoriPredmetBtn = document.getElementById("otvoriPredmetBtn");
 
-    // Character counter for naziv
-    const nazivTextarea = document.getElementById("naziv");
-    const charCount = document.getElementById("charCount");
-    const charCounter = document.querySelector(".seup-char-counter");
-
-    if (nazivTextarea && charCount) {
-      nazivTextarea.addEventListener("input", function() {
-        const count = this.value.length;
-        charCount.textContent = count;
-        
-        charCounter.classList.remove("warning", "danger");
-        if (count > 400) {
-          charCounter.classList.add("danger");
-        } else if (count > 300) {
-          charCounter.classList.add("warning");
-        }
-      });
-    }
-
-    // Modal functionality
-    const dateModal = document.getElementById("dateModal");
-    const tagsModal = document.getElementById("tagsModal");
-    let currentDateTarget = null;
-    let selectedTags = new Set();
-    let tempSelectedTags = new Set();
-
-    // Date picker functionality
-    document.getElementById("datumOtvaranjaBtn").addEventListener("click", function() {
-      currentDateTarget = "datumOtvaranja";
-      showDateModal();
-    });
-
-    document.getElementById("strankaDatumBtn").addEventListener("click", function() {
-      currentDateTarget = "strankaDatum";
-      showDateModal();
-    });
-
-    // Tags functionality
-    document.getElementById("tagsBtn").addEventListener("click", function() {
-      tempSelectedTags = new Set(selectedTags);
-      updateTagsModal();
-      showTagsModal();
-    });
-
-    function showDateModal() {
-      dateModal.classList.add("show");
-      initCalendar();
-    }
-
-    function hideDateModal() {
-      dateModal.classList.remove("show");
-    }
-
-    function showTagsModal() {
-      tagsModal.classList.add("show");
-    }
-
-    function hideTagsModal() {
-      tagsModal.classList.remove("show");
-    }
-
-    function initCalendar() {
-      const container = document.getElementById("calendar-container");
-      const today = new Date();
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
-      
-      container.innerHTML = createCalendarHTML(currentYear, currentMonth);
-      
-      // Add click handlers to dates
-      container.querySelectorAll(".calendar-date").forEach(date => {
-        date.addEventListener("click", function() {
-          container.querySelectorAll(".calendar-date").forEach(d => d.classList.remove("selected"));
-          this.classList.add("selected");
-        });
-      });
-    }
-
-    function createCalendarHTML(year, month) {
-      const monthNames = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
-                         "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      let html = `
-        <div class="calendar-header">
-          <h5>${monthNames[month]} ${year}</h5>
-        </div>
-        <div class="calendar-grid">
-          <div class="calendar-day-header">Pon</div>
-          <div class="calendar-day-header">Uto</div>
-          <div class="calendar-day-header">Sri</div>
-          <div class="calendar-day-header">Čet</div>
-          <div class="calendar-day-header">Pet</div>
-          <div class="calendar-day-header">Sub</div>
-          <div class="calendar-day-header">Ned</div>
-      `;
-      
-      // Empty cells for days before month starts
-      for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
-        html += '<div class="calendar-empty"></div>';
-      }
-      
-      // Days of the month
-      for (let day = 1; day <= daysInMonth; day++) {
-        const isToday = (day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
-        html += `<div class="calendar-date ${isToday ? 'today' : ''}" data-date="${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}">${day}</div>`;
-      }
-      
-      html += '</div>';
-      return html;
-    }
-
-    function updateTagsModal() {
-      document.querySelectorAll(".seup-tag-option").forEach(tag => {
-        const tagId = tag.dataset.tagId;
-        if (tempSelectedTags.has(tagId)) {
-          tag.classList.add("selected");
-        } else {
-          tag.classList.remove("selected");
-        }
-      });
-    }
-
-    function updateSelectedTagsDisplay() {
-      const container = document.getElementById("selected-tags");
-      container.innerHTML = "";
-      
-      selectedTags.forEach(tagId => {
-        const tagElement = document.querySelector(`[data-tag-id="${tagId}"]`);
-        if (tagElement) {
-          const tagName = tagElement.textContent.trim();
-          const tagBadge = document.createElement("div");
-          tagBadge.className = "seup-selected-tag";
-          tagBadge.innerHTML = `
-            <i class="fas fa-tag me-1"></i>
-            ${tagName}
-            <button type="button" class="seup-tag-remove" data-tag-id="${tagId}">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
-          container.appendChild(tagBadge);
-        }
-      });
-      
-      // Update button text
-      const tagsBtn = document.getElementById("tagsBtn");
-      if (selectedTags.size > 0) {
-        tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odabrano: ${selectedTags.size} oznaka`;
-        tagsBtn.classList.add("selected");
-      } else {
-        tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odaberi oznake`;
-        tagsBtn.classList.remove("selected");
-      }
-    }
-
-    // Modal event listeners
-    document.getElementById("closeDateModal").addEventListener("click", hideDateModal);
-    document.getElementById("cancelDate").addEventListener("click", hideDateModal);
-    document.getElementById("closeTagsModal").addEventListener("click", hideTagsModal);
-    document.getElementById("cancelTags").addEventListener("click", hideTagsModal);
-
-    document.getElementById("confirmDate").addEventListener("click", function() {
-      const selectedDate = document.querySelector(".calendar-date.selected");
-      if (selectedDate) {
-        const dateValue = selectedDate.dataset.date;
-        const [year, month, day] = dateValue.split("-");
-        const formattedDate = `${day}.${month}.${year}`;
-        
-        if (currentDateTarget === "datumOtvaranja") {
-          document.getElementById("datumOtvaranjaValue").value = dateValue;
-          document.getElementById("datumOtvaranjaBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
-          document.getElementById("datumOtvaranjaBtn").classList.add("selected");
-        } else if (currentDateTarget === "strankaDatum") {
-          document.getElementById("strankaDatumValue").value = dateValue;
-          document.getElementById("strankaDatumBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
-          document.getElementById("strankaDatumBtn").classList.add("selected");
-        }
-      }
-      hideDateModal();
-    });
-
-    document.getElementById("confirmTags").addEventListener("click", function() {
-      selectedTags = new Set(tempSelectedTags);
-      updateSelectedTagsDisplay();
-      hideTagsModal();
-    });
-
-    // Tag selection in modal
-    document.addEventListener("click", function(e) {
-      if (e.target.closest(".seup-tag-option")) {
-        const tagOption = e.target.closest(".seup-tag-option");
-        const tagId = tagOption.dataset.tagId;
-        
-        if (tempSelectedTags.has(tagId)) {
-          tempSelectedTags.delete(tagId);
-          tagOption.classList.remove("selected");
-        } else {
-          tempSelectedTags.add(tagId);
-          tagOption.classList.add("selected");
-        }
-      }
-      
-      // Remove tag from selected
-      if (e.target.closest(".seup-tag-remove")) {
-        const tagId = e.target.closest(".seup-tag-remove").dataset.tagId;
-        selectedTags.delete(tagId);
-        updateSelectedTagsDisplay();
-      }
-    });
-
-    // Close modals on outside click
-    window.addEventListener("click", function(e) {
-      if (e.target === dateModal) hideDateModal();
-      if (e.target === tagsModal) hideTagsModal();
-    });
-
     // Stranka autocomplete functionality
     const strankaInput = document.getElementById('stranka');
+    const strankaResults = document.getElementById('stranka-results');
     let lastSearchTerm = '';
 
+    jQuery(document).ready(function() {
+      // Initialize flatpickr
+      flatpickr('.flatpickr-date', {
+        dateFormat: "d.m.Y",
+        locale: "hr",
+        allowInput: true,
+        static: true
+      });
+    });
+
+
+    /****************************************/
+    /* Stranka autocomplete funkcionalnost  */
+    /****************************************/
     document.getElementById('strankaCheck').addEventListener('change', function() {
       const selectField = document.getElementById('stranka');
+      const label = document.getElementById('strankaCheckLabel');
       const errorDiv = document.getElementById('strankaError');
       const container = document.getElementById('strankaDatumContainer');
 
       if (this.checked) {
+        // Enable field and make it required
         selectField.disabled = false;
         selectField.required = true;
 
+        // Initialize Select2 if not already initialized
         if (!selectField.hasAttribute('data-select2-id')) {
           jQuery(selectField).select2({
             placeholder: "OIB ili naziv stranke",
@@ -1357,7 +379,9 @@ document.addEventListener("DOMContentLoaded", function() {
               dataType: 'json',
               delay: 300,
               data: function(params) {
-                return { term: params.term };
+                return {
+                  term: params.term
+                };
               },
               processResults: function(data) {
                 return {
@@ -1373,33 +397,72 @@ document.addEventListener("DOMContentLoaded", function() {
           });
         }
 
+        // Update button style
+        label.classList.remove('btn-outline-secondary');
+        label.classList.add('btn-primary');
+
+        // Clear any previous errors
         errorDiv.style.display = 'none';
         selectField.classList.remove('is-invalid');
+
+        // Show date container
         container.style.display = 'block';
+
+        // Focus the field
         selectField.focus();
       } else {
+        // Destroy Select2 and disable
         if (selectField.hasAttribute('data-select2-id')) {
           $(selectField).select2('destroy');
         }
         selectField.disabled = true;
         selectField.required = false;
         selectField.innerHTML = '';
+
+        // Revert button style
+        label.classList.remove('btn-primary');
+        label.classList.add('btn-outline-secondary');
+
+        // Clear any errors
         errorDiv.style.display = 'none';
         selectField.classList.remove('is-invalid');
+
+        // Hide date container
         container.style.display = 'none';
-        
-        // Clear date
-        document.getElementById("strankaDatumValue").value = '';
-        document.getElementById("strankaDatumBtn").innerHTML = '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-        document.getElementById("strankaDatumBtn").classList.remove("selected");
+
+        // Clear date inputs
+        jQuery('input[name="strankaDatumOtvaranja_day"]').val('');
+        jQuery('input[name="strankaDatumOtvaranja_month"]').val('');
+        jQuery('input[name="strankaDatumOtvaranja_year"]').val('');
       }
     });
 
+    /****************************************/
+    /* KRAJ Stranka autocomplete funkcionalnost  */
+    /****************************************/
+
+    const placeholderText = "<?php echo $langs->trans('Odaberi Sadrzaj'); ?>";
     // Check if elements are present
     if (!klasaSelect || !sadrzajSelect || !zaposlenikSelect || !klasaValue) {
-      console.error("Required elements not found in DOM.");
+      if (!klasaSelect) {
+        console.error("Klasa select element not found in DOM.");
+      }
+      if (!sadrzajSelect) {
+        console.error("Sadrzaj select element not found in DOM.");
+      }
+      if (!dosjeSelect) {
+        console.error("Dosje select element not found in DOM.");
+      }
+      if (!zaposlenikSelect) {
+        console.error("Zaposlenik select element not found in DOM.");
+      }
+      if (!klasaValue) {
+        console.error("Klasa value element not found in DOM.");
+      }
+      console.error("Klasa, Sadrzaj, Zaposlenik, or Klasa Value element not found in DOM.");
       return;
     }
+    console.log("DOMContentLoaded");
 
     var klasaText = <?php echo json_encode($klasa_text); ?>;
 
@@ -1420,6 +483,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const selectedDosje = dosjeSelect.value || "DOS";
       const rbr = currentValues.rbr || "1";
 
+      // Build the string using template literals
       const updatedText = `KLASA: ${klasa}-${sadrzaj}/${year}-${selectedDosje}/${rbr}`;
       klasaValue.textContent = updatedText;
     }
@@ -1428,7 +492,7 @@ document.addEventListener("DOMContentLoaded", function() {
       var klasa = klasaSelect.value || "OZN";
       var sadrzaj = sadrzajSelect.value || "SAD";
       var dosje_br = dosjeSelect.value || "DOS";
-      
+      console.log("gledam jel postoji predmet");
       if (klasa !== "OZN" && sadrzaj !== "SAD" && dosje_br !== "DOS") {
         fetch(
             "novi_predmet.php?ajax=1&" +
@@ -1436,14 +500,27 @@ document.addEventListener("DOMContentLoaded", function() {
             "&sadrzaj=" + encodeURIComponent(sadrzaj) +
             "&dosje_br=" + encodeURIComponent(dosje_br) +
             "&god=" + encodeURIComponent(year), {
-              headers: { "Accept": "application/json" }
+              headers: {
+                "Accept": "application/json"
+              }
             }
           )
-          .then(response => response.json())
+          .then(response => {
+            return response.json();
+          })
           .then(data => {
             if (data.status === "exists" || data.status === "inserted") {
+              // Update the RBR part of the klasa text
               currentValues.rbr = data.next_rbr;
+
+              // Refresh the klasa text on screen
               updateKlasaValue();
+
+              if (data.status === "exists") {
+                console.log("Ovakav predmet postoji. Generiram sljedeci redni broj predmeta.");
+              }
+            } else {
+              console.log("Predmet does not exist, ready to create new one." + data.status);
             }
           })
           .catch(error => console.error("Error checking predmet:", error));
@@ -1451,23 +528,37 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function resetKlasaDisplay() {
-      currentValues = { klasa: "", sadrzaj: "", dosje: "", rbr: "1", zaposlenik: "" };
+      currentValues = {
+        klasa: "",
+        sadrzaj: "",
+        dosje: "",
+        rbr: "1",
+        zaposlenik: ""
+      };
       klasaSelect.value = "";
       sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
       dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
       zaposlenikSelect.value = "";
+
       updateKlasaValue();
     }
 
     // Update on klasa change
     if (klasaSelect) {
       klasaSelect.addEventListener("change", function() {
+        console.log("Selected klasa:", this.value);
+        console.log("Available sadrzaj:", klasaMap[this.value]);
         currentValues.klasa = this.value || "";
         currentValues.dosje = "";
 
+        // Reset sadrzaj dropdown
         sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
+
+
         dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
 
+        // Populate new options based on selected klasa
+        // Populate Sadrzaj if klasa selected
         if (this.value && klasaMap[this.value]) {
           const sadrzajValues = Object.keys(klasaMap[this.value]);
           sadrzajValues.forEach(sadrzaj => {
@@ -1476,6 +567,7 @@ document.addEventListener("DOMContentLoaded", function() {
           });
         }
 
+        // Update the klasa text
         updateKlasaValue();
         checkIfPredmetExists();
       });
@@ -1484,13 +576,17 @@ document.addEventListener("DOMContentLoaded", function() {
     // Update on sadrzaj change
     if (sadrzajSelect) {
       sadrzajSelect.addEventListener("change", function() {
+        console.log("Selected klasa:", klasaSelect.value);
+        console.log("Selected sadrzaj:", this.value);
+        console.log("Available dosje:", klasaMap[klasaSelect.value]?.[this.value]);
         dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
+
         currentValues.sadrzaj = this.value || "SAD";
         currentValues.dosje = "";
 
         const klasa = klasaSelect.value;
         const sadrzaj = this.value;
-        
+        // Populate Dosje Broj if values exist
         if (klasa && sadrzaj && klasaMap[klasa] && klasaMap[klasa][sadrzaj]) {
           klasaMap[klasa][sadrzaj].forEach(dosje => {
             const option = new Option(dosje, dosje);
@@ -1502,15 +598,13 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     }
 
-    if (dosjeSelect) {
+    if (dosjeSelect)
       dosjeSelect.addEventListener("change", function() {
         currentValues.dosje = this.value || "";
         updateKlasaValue();
         checkIfPredmetExists();
       });
-    }
 
-    // Submit handler
     otvoriPredmetBtn.addEventListener("click", function() {
       const klasa = klasaSelect.value;
       const sadrzaj = sadrzajSelect.value;
@@ -1518,16 +612,20 @@ document.addEventListener("DOMContentLoaded", function() {
       const zaposlenik = zaposlenikSelect.value;
       const naziv = document.getElementById("naziv").value;
 
+      // Get elements related to Stranka field
       const strankaCheckbox = document.getElementById('strankaCheck');
       const strankaField = document.getElementById('stranka');
       const strankaError = document.getElementById('strankaError');
 
+      // Reset any previous error states
       strankaField.classList.remove('is-invalid');
       strankaError.style.display = 'none';
 
+      // 1. VALIDATION FOR ALL REQUIRED FIELDS
       let isValid = true;
       const missingFields = [];
 
+      // Check each required field
       if (!klasa) missingFields.push("Klasa broj");
       if (!sadrzaj) missingFields.push("Sadržaj");
       if (!dosje) missingFields.push("Dosje broj");
@@ -1539,6 +637,7 @@ document.addEventListener("DOMContentLoaded", function() {
         strankaDateError.style.display = 'none';
       }
 
+      // 2. SPECIAL VALIDATION FOR STRANKA FIELD
       if (strankaCheckbox.checked) {
         if (!strankaField.value) {
           isValid = false;
@@ -1547,30 +646,38 @@ document.addEventListener("DOMContentLoaded", function() {
           strankaField.focus();
         }
 
-        const strankaDateValue = document.getElementById('strankaDatumValue').value;
-        if (!strankaDateValue) {
+        // Validate date for Stranka
+        const strankaDateInput = document.querySelector('input[name="strankaDatumOtvaranja"]');
+        if (!strankaDateInput || !strankaDateInput.value) {
           isValid = false;
+          // Show date error
           if (strankaDateError) {
             strankaDateError.style.display = 'block';
+          } else {
+            // Create error element if it doesn't exist
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'strankaDateError';
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'Odaberite datum otvaranja predmeta!';
+            errorDiv.style.display = 'block';
+            document.querySelector('#strankaDatumContainer').appendChild(errorDiv);
           }
         }
       }
 
+      // 3. CHECK IF ANY REQUIRED FIELDS ARE MISSING
       if (missingFields.length > 0) {
         isValid = false;
+        // Create alert message listing all missing fields
         const errorMessage = "Molimo vas da popunite sva obavezna polja:\n\n" +
           missingFields.map(field => `- ${field}`).join("\n");
         alert(errorMessage);
       }
 
+      // 4. STOP IF VALIDATION FAILED
       if (!isValid) {
         return;
       }
-
-      // Add loading state
-      this.classList.add('seup-loading');
-      this.disabled = true;
-
       const formData = new FormData();
       formData.append("action", "otvori_predmet");
       formData.append("klasa_br", klasa);
@@ -1580,27 +687,47 @@ document.addEventListener("DOMContentLoaded", function() {
       formData.append("god", year);
       formData.append("naziv", naziv);
 
+      // Add Stranka value if checkbox is checked
       if (strankaCheckbox.checked) {
         formData.append("stranka", strankaField.value.trim());
-        const strankaDateValue = document.getElementById('strankaDatumValue').value;
-        if (strankaDateValue) {
-          formData.append("strankaDatumOtvaranja", strankaDateValue);
+        const strankaDateInput = document.querySelector('input[name="strankaDatumOtvaranja"]');
+
+        if (strankaDateInput && strankaDateInput.value) {
+          // Parse the date from DD.MM.YYYY to YYYY-MM-DD
+          const [day, month, year] = strankaDateInput.value.split('.');
+          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          formData.append("strankaDatumOtvaranja", formattedDate);
         }
       }
 
-      const datumValue = document.getElementById('datumOtvaranjaValue').value;
+
+      // Get date value and convert to timestamp
+      const datumInput = document.querySelector('input[name="datumOtvaranja"]');
       let datumOtvaranjaTimestamp = null;
 
-      if (datumValue) {
+      if (datumInput && datumInput.value) {
+        // Parse the date from DD.MM.YYYY to YYYY-MM-DD
+        const [day, month, year] = datumInput.value.split('.');
         const now = new Date();
-        datumOtvaranjaTimestamp = `${datumValue} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        datumOtvaranjaTimestamp =
+          `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ` +
+          `${now.getHours().toString().padStart(2, '0')}:` +
+          `${now.getMinutes().toString().padStart(2, '0')}:` +
+          `${now.getSeconds().toString().padStart(2, '0')}`;
       } else {
         const now = new Date();
-        datumOtvaranjaTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        datumOtvaranjaTimestamp =
+          `${now.getFullYear()}-` +
+          `${(now.getMonth() + 1).toString().padStart(2, '0')}-` +
+          `${now.getDate().toString().padStart(2, '0')} ` +
+          `${now.getHours().toString().padStart(2, '0')}:` +
+          `${now.getMinutes().toString().padStart(2, '0')}:` +
+          `${now.getSeconds().toString().padStart(2, '0')}`;
       }
 
       formData.append("datumOtvaranja", datumOtvaranjaTimestamp);
 
+      // Add selected tags
       selectedTags.forEach(tagId => {
         formData.append("tags[]", tagId);
       });
@@ -1610,206 +737,190 @@ document.addEventListener("DOMContentLoaded", function() {
           body: formData
         })
         .then(async response => {
-          const responseText = await response.text();
+          const responseText = await response.text(); // First get raw text
+
           try {
+            // Try to parse as JSON
             return JSON.parse(responseText);
           } catch (e) {
+            // If parsing fails, throw custom error with server response
             throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
           }
         })
         .then(data => {
           if (data.success) {
-            // Show success message
-            showMessage("Predmet je uspješno otvoren!", "success");
+            alert("Predmet je uspješno otvoren.");
 
-            // Reset form
+            // Reset klasa display (preserves your klasa/sadrzaj functionality)
             resetKlasaDisplay();
-            document.getElementById("naziv").value = "";
-            
-            // Reset dates
-            document.getElementById("datumOtvaranjaValue").value = '';
-            document.getElementById("datumOtvaranjaBtn").innerHTML = '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-            document.getElementById("datumOtvaranjaBtn").classList.remove("selected");
-            
-            document.getElementById("strankaDatumValue").value = '';
-            document.getElementById("strankaDatumBtn").innerHTML = '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
-            document.getElementById("strankaDatumBtn").classList.remove("selected");
 
-            // Reset stranka
+            // Clear main date inputs
+            const mainDateInput = document.querySelector('input[name="datumOtvaranja"]');
+            if (mainDateInput) {
+              mainDateInput.value = '';
+              mainDateInput.dispatchEvent(new Event('change')); // Trigger Flatpickr update
+            }
+
+            // Clear customer date inputs
+            const strankaDateInput = document.querySelector('input[name="strankaDatumOtvaranja"]');
+            if (strankaDateInput) {
+              strankaDateInput.value = '';
+              strankaDateInput.dispatchEvent(new Event('change')); // Trigger Flatpickr update
+            }
+
+            // Reset Stranka section
             const strankaCheckbox = document.getElementById('strankaCheck');
             const strankaField = document.getElementById('stranka');
-            
-            if (strankaCheckbox && strankaField) {
+            const strankaError = document.getElementById('strankaError');
+
+            if (strankaCheckbox && strankaField && strankaError) {
               strankaCheckbox.checked = false;
+
+              // Reset Select2 if it exists
               if (strankaField.hasAttribute('data-select2-id')) {
                 $(strankaField).val(null).trigger('change');
               } else {
                 strankaField.value = '';
               }
+
               strankaField.disabled = true;
               strankaField.classList.remove('is-invalid');
-              document.getElementById('strankaError').style.display = 'none';
-              document.getElementById('strankaDatumContainer').style.display = 'none';
+              strankaError.style.display = 'none';
+
+              // Update button styles
+              const strankaCheckLabel = document.getElementById('strankaCheckLabel');
+              if (strankaCheckLabel) {
+                strankaCheckLabel.classList.remove('btn-primary');
+                strankaCheckLabel.classList.add('btn-outline-secondary');
+              }
+
+              // Hide date container
+              const container = document.getElementById('strankaDatumContainer');
+              if (container) container.style.display = 'none';
             }
 
-            // Reset tags
-            selectedTags.clear();
-            updateSelectedTagsDisplay();
-            
-            // Reset character counter
-            if (charCount) charCount.textContent = "0";
-            if (charCounter) charCounter.classList.remove("warning", "danger");
-            
+            // Clear case title
+            document.getElementById("naziv").value = "";
           } else {
-            showMessage("Greška pri otvaranju predmeta: " + data.error, "error");
+            console.error("Error otvaranje predmeta NOVI_PREDMET:", data.error);
+            alert("Greška pri otvaranju predmeta: NOVI_PREDMET " + data.error);
           }
         })
         .catch(error => {
-          showMessage("Došlo je do greške: " + error.message, "error");
-        })
-        .finally(() => {
-          // Remove loading state
-          this.classList.remove('seup-loading');
-          this.disabled = false;
+          console.error("CATCH otvaranje predmeta:NOVI_PREDMET", error);
+          alert("Došlo je do greške: " + error.message);
         });
     });
 
-    // Initial update
-    updateKlasaValue();
-    updateSelectedTagsDisplay();
-  });
-
-  // Toast message function
-  function showMessage(message, type = 'success', duration = 5000) {
-    let messageEl = document.querySelector('.seup-message-toast');
-    if (!messageEl) {
-      messageEl = document.createElement('div');
-      messageEl.className = 'seup-message-toast';
-      document.body.appendChild(messageEl);
+    // Update on zaposlenik change
+    if (zaposlenikSelect) {
+      zaposlenikSelect.addEventListener("change", function() {
+        currentValues.zaposlenik = this.value || "DOS";
+        updateKlasaValue();
+        checkIfPredmetExists();
+      });
     }
 
-    messageEl.className = `seup-message-toast seup-message-${type} show`;
-    messageEl.innerHTML = `
-      <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-      ${message}
-    `;
 
-    setTimeout(() => {
-      messageEl.classList.remove('show');
-    }, duration);
-  }
+    // Initial update to set the default state
+    updateKlasaValue();
+  });
+
+
+  // Tag selection functionality
+  const tagsDropdown = document.getElementById("tagsDropdown");
+  const availableTags = document.getElementById("available-tags");
+  const addTagBtn = document.getElementById("add-tag-btn");
+  const selectedTagsContainer = document.getElementById("selected-tags");
+  const selectedTags = new Set();
+
+  // Track selected option
+  let selectedOption = null;
+
+  // Make tag options selectable
+  availableTags.addEventListener("click", function(e) {
+    if (e.target.classList.contains("tag-option")) {
+      // Remove active class from all options
+      document.querySelectorAll('.tag-option').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Set active class on clicked option
+      e.target.classList.add('active');
+      selectedOption = e.target;
+
+      // Update dropdown button text
+      tagsDropdown.textContent = e.target.textContent;
+    }
+  });
+
+
+  // Add tag to selection
+  addTagBtn.addEventListener("click", function() {
+    if (!selectedOption) return;
+
+    const tagId = selectedOption.dataset.tagId;
+    const tagName = selectedOption.textContent;
+
+    if (!selectedTags.has(tagId)) {
+      selectedTags.add(tagId);
+
+      // Create selected tag badge
+      const tagElement = document.createElement("span");
+      tagElement.className = "badge bg-primary rounded-pill p-2 d-flex align-items-center";
+      tagElement.dataset.tagId = tagId;
+      tagElement.innerHTML = `
+            ${tagName}
+            <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove"></button>
+        `;
+
+      selectedTagsContainer.appendChild(tagElement);
+
+      // Reset selection
+      selectedOption.classList.remove('active');
+      selectedOption = null;
+      tagsDropdown.textContent = "Odaberi oznake";
+    }
+  });
+
+  // Remove tag from selection
+  selectedTagsContainer.addEventListener("click", function(e) {
+    if (e.target.classList.contains("btn-close")) {
+      const tagElement = e.target.closest(".badge");
+      const tagId = tagElement.dataset.tagId;
+
+      selectedTags.delete(tagId);
+      tagElement.remove();
+    }
+  });
+  //TODO CHECK if documents in db actually exist
+
+
+
+  // document.querySelector('[data-action="generate_pdf"]').addEventListener('click', function() { // TODO ostavi za kasnije (( RADI ))
+  //   const generatePdfUrl = '< ?php echo DOL_URL_ROOT; ?>/custom/seup/class/generate_pdf.php';
+
+  //   console.log("Sending request to: " + generatePdfUrl);
+
+  //   fetch(generatePdfUrl, {
+  //       method: 'POST'
+  //     })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       console.log("Response data:", data);
+  //       if (data.success && data.file) {
+  //         const url = new URL(data.file, window.location.origin);
+  //         const filename = url.searchParams.get('file');
+  //         // Open the generated PDF in a new tab
+  //         /*const downloadUrl = '< ?php echo DOL_URL_ROOT; ?>/custom/seup/download_temp_pdf.php?file=' + encodeURIComponent(filename); */
+  //         window.open(data.file, '_blank'); // just open the `document.php?modulepart=temp&file=...` URL directly
+  //       } else {
+  //         throw new Error(data.error || 'PDF generation failed.');
+  //       }
+  //     })
+  //     .catch(error => {
+  //       console.error('PDF generation error:', error);
+  //       alert('PDF generation failed: ' + error.message);
+  //     });
+  // });
 </script>
-
-<style>
-/* Calendar Styles */
-.calendar-header {
-  text-align: center;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--neutral-200);
-}
-
-.calendar-header h5 {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--secondary-900);
-  margin: 0;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-1);
-}
-
-.calendar-day-header {
-  padding: var(--space-2);
-  text-align: center;
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  color: var(--secondary-600);
-  text-transform: uppercase;
-}
-
-.calendar-date {
-  padding: var(--space-2);
-  text-align: center;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-}
-
-.calendar-date:hover {
-  background: var(--primary-100);
-  color: var(--primary-700);
-}
-
-.calendar-date.today {
-  background: var(--primary-500);
-  color: white;
-}
-
-.calendar-date.selected {
-  background: var(--accent-500);
-  color: white;
-}
-
-.calendar-empty {
-  padding: var(--space-2);
-}
-
-/* Toast Messages */
-.seup-message-toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: var(--space-4) var(--space-6);
-  border-radius: var(--radius-lg);
-  color: white;
-  font-weight: var(--font-medium);
-  box-shadow: var(--shadow-xl);
-  transform: translateX(400px);
-  transition: transform var(--transition-normal);
-  z-index: var(--z-tooltip);
-  max-width: 400px;
-}
-
-.seup-message-toast.show {
-  transform: translateX(0);
-}
-
-.seup-message-success {
-  background: linear-gradient(135deg, var(--success-500), var(--success-600));
-}
-
-.seup-message-error {
-  background: linear-gradient(135deg, var(--error-500), var(--error-600));
-}
-
-/* Loading state for buttons */
-.seup-btn.seup-loading {
-  position: relative;
-  color: transparent;
-}
-
-.seup-btn.seup-loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
