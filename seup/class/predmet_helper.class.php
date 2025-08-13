@@ -1290,4 +1290,150 @@ class Predmet_helper
             'directory_path' => $dir_path
         ];
     }
+
+    /**
+     * Sync files from filesystem to ECM database
+     */
+    public static function syncPredmetFiles($db, $conf, $user, $predmet_id)
+    {
+        $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+        
+        if (!is_dir($upload_dir)) {
+            return ['success' => false, 'error' => 'Directory does not exist'];
+        }
+
+        $files_added = 0;
+        $errors = [];
+
+        try {
+            $db->begin();
+
+            // Get existing files from database
+            $existing_files = [];
+            $sql = "SELECT filename FROM " . MAIN_DB_PREFIX . "ecm_files 
+                    WHERE filepath = 'SEUP/predmet_" . (int)$predmet_id . "/'";
+            $resql = $db->query($sql);
+            if ($resql) {
+                while ($obj = $db->fetch_object($resql)) {
+                    $existing_files[] = $obj->filename;
+                }
+            }
+
+            // Scan filesystem
+            $filesystem_files = scandir($upload_dir);
+            $filesystem_files = array_filter($filesystem_files, function($file) {
+                return !in_array($file, ['.', '..']) && is_file($upload_dir . $file);
+            });
+
+            // Find missing files
+            $missing_files = array_diff($filesystem_files, $existing_files);
+
+            foreach ($missing_files as $filename) {
+                $fullpath = $upload_dir . $filename;
+                
+                // Generate external urbroj
+                $urbroj = self::generateExternalUrbroj($db);
+                
+                // Create ECM record
+                $ecmfile = new EcmFiles($db);
+                $ecmfile->filepath = 'SEUP/predmet_' . $predmet_id . '/';
+                $ecmfile->filename = $filename;
+                $ecmfile->urbroj = $urbroj;
+                $ecmfile->label = $filename;
+                $ecmfile->entity = $conf->entity;
+                $ecmfile->gen_or_uploaded = 'uploaded';
+                $ecmfile->description = 'External file synced from filesystem';
+                $ecmfile->fk_user_c = $user->id;
+                $ecmfile->fk_user_m = $user->id;
+                $ecmfile->filetype = dol_mimetype($filename);
+                
+                $result = $ecmfile->create($user);
+                if ($result > 0) {
+                    $files_added++;
+                    dol_syslog("Added file to ECM: $filename with urbroj: $urbroj", LOG_INFO);
+                } else {
+                    $errors[] = "Failed to add $filename: " . $ecmfile->error;
+                }
+            }
+
+            if (empty($errors)) {
+                $db->commit();
+                return [
+                    'success' => true, 
+                    'files_added' => $files_added,
+                    'message' => "Uspješno dodano $files_added datoteka"
+                ];
+            } else {
+                $db->rollback();
+                return [
+                    'success' => false, 
+                    'error' => implode(', ', $errors)
+                ];
+            }
+
+        } catch (Exception $e) {
+            $db->rollback();
+            return [
+                'success' => false, 
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get file statistics for sync indicator
+     */
+    public static function getFileStats($db, $predmet_id)
+    {
+        $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+        
+        // Count filesystem files
+        $filesystem_count = 0;
+        if (is_dir($upload_dir)) {
+            $files = scandir($upload_dir);
+            $filesystem_count = count(array_filter($files, function($file) use ($upload_dir) {
+                return !in_array($file, ['.', '..']) && is_file($upload_dir . $file);
+            }));
+        }
+
+        // Count database files
+        $database_count = 0;
+        $sql = "SELECT COUNT(*) as count FROM " . MAIN_DB_PREFIX . "ecm_files 
+                WHERE filepath = 'SEUP/predmet_" . (int)$predmet_id . "/'";
+        $resql = $db->query($sql);
+        if ($resql && $obj = $db->fetch_object($resql)) {
+            $database_count = (int)$obj->count;
+        }
+
+        return [
+            'filesystem' => $filesystem_count,
+            'database' => $database_count,
+            'needs_sync' => $filesystem_count > $database_count
+        ];
+    }
+
+    /**
+     * Generate external urbroj for synced files
+     */
+    public static function generateExternalUrbroj($db)
+    {
+        $today = date('Ymd');
+        $prefix = "EXT-$today-";
+        
+        // Find highest number for today
+        $sql = "SELECT urbroj FROM " . MAIN_DB_PREFIX . "ecm_files 
+                WHERE urbroj LIKE '$prefix%' 
+                ORDER BY urbroj DESC LIMIT 1";
+        
+        $resql = $db->query($sql);
+        $next_number = 1;
+        
+        if ($resql && $obj = $db->fetch_object($resql)) {
+            $last_urbroj = $obj->urbroj;
+            $last_number = (int)substr($last_urbroj, -4);
+            $next_number = $last_number + 1;
+        }
+        
+        return $prefix . sprintf('%04d', $next_number);
+    }
 }

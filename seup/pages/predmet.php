@@ -140,6 +140,26 @@ llxHeader("", "SEUP - Predmet", '', '', 0, 0, '', '', '', 'mod-seup page-predmet
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     dol_syslog('POST request', LOG_INFO);
 
+    // Handle file sync
+    if (isset($_POST['action']) && $_POST['action'] === 'sync_files') {
+        header('Content-Type: application/json');
+        ob_end_clean();
+        
+        $result = Predmet_helper::syncPredmetFiles($db, $conf, $user, $caseId);
+        echo json_encode($result);
+        exit;
+    }
+
+    // Handle file stats check
+    if (isset($_GET['action']) && $_GET['action'] === 'check_file_stats') {
+        header('Content-Type: application/json');
+        ob_end_clean();
+        
+        $stats = Predmet_helper::getFileStats($db, $caseId);
+        echo json_encode($stats);
+        exit;
+    }
+
     // Handle document upload
     if (isset($_POST['action']) && GETPOST('action') === 'upload_document') {
         Request_Handler::handleUploadDocument($db, $upload_dir, $langs, $conf, $user);
