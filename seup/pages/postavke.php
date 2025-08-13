@@ -67,7 +67,6 @@ if (!$res) {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 
 if ($res) {
@@ -99,10 +98,9 @@ if (isset($user->socid) && $user->socid > 0) {
  * View
  */
 $form = new Form($db);
-
 $formfile = new FormFile($db);
 
-llxHeader("", "", '', '', 0, 0, '', '', '', 'mod-seup page-index');
+llxHeader("", "SEUP - Postavke", '', '', 0, 0, '', '', '', 'mod-seup page-postavke');
 
 // Modern design assets
 print '<meta name="viewport" content="width=device-width, initial-scale=1">';
@@ -111,7 +109,6 @@ print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
 print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
 print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
 print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
-print '<link href="/custom/seup/css/style.css" rel="stylesheet">';
 
 require_once __DIR__ . '/../class/klasifikacijska_oznaka.class.php';
 require_once __DIR__ . '/../class/oznaka_ustanove.class.php';
@@ -122,7 +119,6 @@ global $hookmanager;
 $messagesFile = DOL_URL_ROOT . '/custom/seup/js/messages.js';
 $hookmanager->initHooks(array('seup'));
 print '<script src="' . $messagesFile . '"></script>';
-
 
 // importanje klasa za rad s podacima: 
 /*
@@ -143,7 +139,6 @@ if ($resql && $db->num_rows($resql) > 0) {
   $ID_ustanove = $podaci_postoje->ID_ustanove;
   dol_syslog("Podaci o oznaci ustanove su ucitani iz baze: " . $ID_ustanove, LOG_INFO);
 }
-
 
 // Provjera i Loadanje korisnika pri loadu stranice
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
@@ -189,7 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/^\d{1,2}$/', $interna_oznaka_korisnika->getRbr_korisnika())) {
       setEventMessages($langs->trans("Invalid serial number (vrijednosti moraju biti u rasponu 0 - 99)"), null, 'errors');
     } else {
-
 
       // Provjera da li postoji vec korisnik s tim rednim brojem
       $sqlCheck = "SELECT COUNT(*) as cnt FROM " . MAIN_DB_PREFIX . "a_interna_oznaka_korisnika WHERE rbr = '" . $db->escape($interna_oznaka_korisnika->getRbr_korisnika()) . "'";
@@ -376,7 +370,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
   }
 
-
   /***************** /***************** /***************** /*****************/
   /***************** SEKCIJA KLASIFIKACIJSKA OZNAKA ****************/
   /***************** /***************** /***************** /*****************/
@@ -556,308 +549,443 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
+// Main hero section with modern design
+print '<main class="seup-settings-hero">';
+
+// Floating background elements
+print '<div class="seup-floating-elements">';
+for ($i = 1; $i <= 5; $i++) {
+    print '<div class="seup-floating-element"></div>';
+}
+print '</div>';
+
+print '<div class="seup-settings-content">';
+
+// Header section
+print '<div class="seup-settings-header">';
+print '<h1 class="seup-settings-title">Postavke Sustava</h1>';
+print '<p class="seup-settings-subtitle">Konfigurirajte osnovne parametre, korisničke oznake i klasifikacijski sustav</p>';
+print '</div>';
+
+// Settings grid
+print '<div class="seup-settings-grid">';
+
+// Card 1: Interne oznake korisnika
+print '<div class="seup-settings-card animate-fade-in-up">';
+print '<div class="seup-card-header">';
+print '<div class="seup-card-icon"><i class="fas fa-users"></i></div>';
+print '<h3 class="seup-card-title">Interne Oznake Korisnika</h3>';
+print '<p class="seup-card-description">Upravljanje korisničkim oznakama i radnim mjestima</p>';
+print '</div>';
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-form">';
+print '<div class="seup-form-grid">';
+print '<div class="seup-form-group">';
+print '<label for="ime_user" class="seup-label"><i class="fas fa-user me-2"></i>Korisnik</label>';
+print '<select name="ime_user" id="ime_user" class="seup-select" required>';
+print '<option value="">Odaberite korisnika</option>';
+foreach ($listUsers as $u) {
+    print '<option value="' . htmlspecialchars($u->getFullName($langs)) . '">';
+    print htmlspecialchars($u->getFullName($langs));
+    print '</option>';
+}
+print '</select>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="redni_broj" class="seup-label"><i class="fas fa-hashtag me-2"></i>Redni broj (0-99)</label>';
+print '<input type="number" name="redni_broj" id="redni_broj" class="seup-input" min="0" max="99" required>';
+print '</div>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="radno_mjesto_korisnika" class="seup-label"><i class="fas fa-briefcase me-2"></i>Radno mjesto</label>';
+print '<input type="text" name="radno_mjesto_korisnika" id="radno_mjesto_korisnika" class="seup-input" required>';
+print '</div>';
+print '<div class="seup-form-actions">';
+print '<button type="submit" name="action_oznaka" value="add" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-plus me-2"></i>Dodaj';
+print '</button>';
+print '<button type="submit" name="action_oznaka" value="update" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-edit me-2"></i>Ažuriraj';
+print '</button>';
+print '<button type="submit" name="action_oznaka" value="delete" class="seup-btn seup-btn-danger">';
+print '<i class="fas fa-trash me-2"></i>Obriši';
+print '</button>';
+print '</div>';
+print '</form>';
+print '</div>';
+
+// Card 2: Oznaka ustanove
+print '<div class="seup-settings-card animate-fade-in-up">';
+print '<div class="seup-card-header">';
+print '<div class="seup-card-icon"><i class="fas fa-building"></i></div>';
+print '<h3 class="seup-card-title">Oznaka Ustanove</h3>';
+print '<p class="seup-card-description">Osnovni podaci o ustanovi i njena identifikacijska oznaka</p>';
+print '</div>';
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" id="ustanova-form" class="seup-form">';
+print '<input type="hidden" name="action_ustanova" id="form-action" value="' . ($podaci_postoje ? 'update' : 'add') . '">';
+print '<div id="messageDiv" class="seup-alert d-none" role="alert"></div>';
+print '<div class="seup-form-grid">';
+print '<div class="seup-form-group">';
+print '<label for="code_ustanova" class="seup-label"><i class="fas fa-code me-2"></i>Oznaka (format: 0000-0-0)</label>';
+print '<input type="text" id="code_ustanova" name="code_ustanova" class="seup-input" ';
+print 'pattern="^\d{4}-\d-\d$" placeholder="0000-0-0" required ';
+print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->code_ustanova) : '') . '">';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="name_ustanova" class="seup-label"><i class="fas fa-tag me-2"></i>Naziv ustanove</label>';
+print '<input type="text" id="name_ustanova" name="name_ustanova" class="seup-input" ';
+print 'placeholder="Unesite naziv ustanove" required ';
+print 'value="' . ($podaci_postoje ? htmlspecialchars($podaci_postoje->name_ustanova) : '') . '">';
+print '</div>';
+print '</div>';
+print '<div class="seup-form-actions">';
+print '<button type="submit" id="ustanova-submit" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-' . ($podaci_postoje ? 'edit' : 'plus') . ' me-2"></i>';
+print ($podaci_postoje ? 'Ažuriraj' : 'Dodaj');
+print '</button>';
+print '</div>';
+print '</form>';
+print '</div>';
+
+// Card 3: Klasifikacijske oznake (wide card)
+print '<div class="seup-settings-card seup-card-wide animate-fade-in-up">';
+print '<div class="seup-card-header">';
+print '<div class="seup-card-icon"><i class="fas fa-sitemap"></i></div>';
+print '<h3 class="seup-card-title">Klasifikacijske Oznake</h3>';
+print '<p class="seup-card-description">Upravljanje hijerarhijskim sustavom klasifikacije dokumenata i predmeta</p>';
+print '</div>';
+print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-form">';
+print '<input type="hidden" id="hidden_id_klasifikacijske_oznake" name="id_klasifikacijske_oznake" value="">';
+
+print '<div class="seup-form-grid seup-grid-3">';
+print '<div class="seup-form-group seup-autocomplete-container">';
+print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group me-2"></i>Klasa broj (000)</label>';
+print '<input type="text" id="klasa_br" name="klasa_br" class="seup-input" ';
+print 'pattern="\d{3}" maxlength="3" placeholder="000" autocomplete="off">';
+print '<div id="autocomplete-results" class="seup-autocomplete-dropdown"></div>';
+print '</div>';
+
+print '<div class="seup-form-group">';
+print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list me-2"></i>Sadržaj (00)</label>';
+print '<input type="text" id="sadrzaj" name="sadrzaj" class="seup-input" ';
+print 'pattern="\d{2}" maxlength="2" placeholder="00">';
+print '</div>';
+
+print '<div class="seup-form-group">';
+print '<label for="dosje_br" class="seup-label"><i class="fas fa-folder me-2"></i>Dosje broj</label>';
+print '<select id="dosje_br" name="dosje_br" class="seup-select" required>';
+print '<option value="">Odaberite dosje</option>';
+for ($i = 1; $i <= 50; $i++) {
+    $val = sprintf('%02d', $i);
+    print '<option value="' . $val . '">' . $val . '</option>';
+}
+print '</select>';
+print '</div>';
+print '</div>';
+
+print '<div class="seup-form-grid">';
+print '<div class="seup-form-group">';
+print '<label for="vrijeme_cuvanja" class="seup-label"><i class="fas fa-clock me-2"></i>Vrijeme čuvanja</label>';
+print '<select id="vrijeme_cuvanja" name="vrijeme_cuvanja" class="seup-select" required>';
+print '<option value="permanent">Trajno</option>';
+for ($g = 1; $g <= 10; $g++) {
+    print '<option value="' . $g . '">' . $g . ' godina</option>';
+}
+print '</select>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="opis_klasifikacije" class="seup-label"><i class="fas fa-align-left me-2"></i>Opis klasifikacije</label>';
+print '<textarea id="opis_klasifikacije" name="opis_klasifikacije" class="seup-textarea" ';
+print 'rows="3" placeholder="Unesite detaljni opis klasifikacijske oznake"></textarea>';
+print '</div>';
+print '</div>';
+
+print '<div class="seup-form-actions">';
+print '<button type="submit" name="action_klasifikacija" value="add" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-plus me-2"></i>Dodaj';
+print '</button>';
+print '<button type="submit" name="action_klasifikacija" value="update" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-edit me-2"></i>Ažuriraj';
+print '</button>';
+print '<button type="submit" name="action_klasifikacija" value="delete" class="seup-btn seup-btn-danger">';
+print '<i class="fas fa-trash me-2"></i>Obriši';
+print '</button>';
+print '</div>';
+print '</form>';
+print '</div>';
+
+print '</div>'; // seup-settings-grid
+
+print '</div>'; // seup-settings-content
+
+// Copyright footer
+print '<footer class="seup-footer">';
+print '<div class="seup-footer-content">';
+print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '</footer>';
+
+print '</main>';
+
+// JavaScript for enhanced functionality
+print '<script src="/custom/seup/js/seup-modern.js"></script>';
 
 ?>
-<div class="container py-5">
-  <!-- Glavni red sa dva stupca -->
-  <div class="row g-4 mb-4">
 
-    <!-- Lijevi stupac: dva kontejnera -->
-    <div class="col-12 col-md-6">
-      <!-- TODO mora se postaviti prava da samo admin moze ovo postavljati za unos, azuriranje i brisanje korisnika -->
-      <!-- 1. Dodavanje interne oznake korisnika -->
-      <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <div class="custom-container bg-white shadow rounded-3 p-4">
-          <h5 class="mb-4"><?php echo $langs->trans('Dodavanje Interne Oznake Korisnika'); ?></h5>
-          <div class="row g-2 mb-3 align-items-center">
-            <div class="col-md-6">
-              <label for="ime_user" class="form-label"><?php echo $langs->trans('Izaberi Korisnika'); ?></label>
-              <select name="ime_user" class="form-select">
-                <option value=""><?php echo $langs->trans('Ime i Prezime Korisnika'); ?></option>
-                <?php foreach ($listUsers as $u): ?>
-                  <option value="<?php echo $u->getFullName($langs); ?>">
-                    <?php echo $u->getFullName($langs); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <!-- Redni broj korisnika -->
-            <div class="col-md-6">
-              <label for="redni_broj" class="form-label"><?php echo $langs->trans('Redni broj korisnika'); ?></label>
-              <input type="text" name="redni_broj" id="redni_broj" class="form-control" placeholder="<?php echo $langs->trans('Unesi redni broj'); ?>" min="0" max="99" required>
-            </div>
-          </div>
-          <!-- Naziv korisnika -->
-          <div class="mb-3">
-            <label for="radno_mjesto_korisnika" class="form-label"><?php echo $langs->trans('Radno Mjesto Korisnika'); ?></label>
-            <input type="text" name="radno_mjesto_korisnika" id="radno_mjesto_korisnika" class="form-control" placeholder="<?php echo $langs->trans('Unesi Radno Mjesto Korisnika'); ?>" required>
-          </div>
-          <div class="mt-3">
-            <button type="submit" name="action_oznaka" value="add" class="btn btn-primary me-2"><?php echo $langs->trans('DODAJ'); ?></button>
-            <button type="submit" name="action_oznaka" value="update" class="btn btn-secondary me-2"><?php echo $langs->trans('AŽURIRAJ'); ?></button>
-            <button type="submit" name="action_oznaka" value="delete" class="btn btn-danger"><?php echo $langs->trans('OBRIŠI'); ?></button>
-          </div>
-        </div>
-      </form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced form handling for ustanova
+    const form = document.getElementById('ustanova-form');
+    const actionField = document.getElementById('form-action');
+    const btnSubmit = document.getElementById('ustanova-submit');
 
-      <!-- 2. Oznaka ustanove -->
-      <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>" id="ustanova-form">
-        <input type="hidden" name="action_ustanova" id="form-action" value="<?php echo ($podaci_postoje ? 'update' : 'add'); ?>">
-        <div class="custom-container bg-white shadow rounded-3 p-4 mt-4 position-relative">
-          <div id="messageDiv" class="alert" role="alert"></div>
-          <h5 class="mb-4"><?php echo $langs->trans('Oznaka Ustanove'); ?></h5>
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <label for="code_ustanova" class="form-label"><?php echo $langs->trans('Oznaka'); ?></label>
-              <input type="text" id="code_ustanova" name="code_ustanova" class="form-control" placeholder="<?php echo $langs->trans('Unesi Oznaku'); ?>" required pattern="^\d{4}-\d-\d$" value="<?php echo $podaci_postoje ? htmlspecialchars($podaci_postoje->code_ustanova) : ''; ?>">
-            </div>
-            <div class="col-md-6">
-              <label for="name_ustanova" class="form-label"><?php echo $langs->trans('Naziv'); ?></label>
-              <input type="text" id="name_ustanova" name="name_ustanova" class="form-control" placeholder="<?php echo $langs->trans('Unesi Naziv');  ?>" value="<?php echo $podaci_postoje ? htmlspecialchars($podaci_postoje->name_ustanova) : ''; ?>">
-            </div>
-          </div>
-          <div class="mt-3">
-            <button type="submit" id="ustanova-submit" class="btn btn-primary me-2">
-              <?php echo $podaci_postoje ? $langs->trans('AŽURIRAJ') : $langs->trans('DODAJ'); ?>
-            </button>
-          </div>
-        </div>
-      </form>
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-
-          const form = document.getElementById('ustanova-form');
-          const actionField = document.getElementById('form-action');
-          const btnSubmit = document.getElementById('ustanova-submit');
-
-          form.addEventListener('submit', async function(e) {
+    if (form && btnSubmit) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
-
+            
+            // Add loading state
+            btnSubmit.classList.add('seup-loading');
+            btnSubmit.disabled = true;
+            
             const formData = new FormData(this);
-            formData.append('action_ustanova', btnSubmit.textContent.trim() === 'DODAJ' ? 'add' : 'update');
+            formData.append('action_ustanova', btnSubmit.textContent.trim() === 'Dodaj' ? 'add' : 'update');
 
             try {
-              const response = await fetch('<?php echo $_SERVER['PHP_SELF'] ?>', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'Accept': 'application/json'
+                const response = await fetch('<?php echo $_SERVER['PHP_SELF'] ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP error ${response.status}: ${text.slice(0, 100)}`);
                 }
-              });
-              // Check for HTML error pages first
-              if (!response.ok) {
-                const text = await response.text();
-                throw new Error(`HTTP error ${response.status}: ${text.slice(0, 100)}`);
-              }
 
-              // Check content type first
-              const contentType = response.headers.get('content-type');
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Invalid response: ${text.slice(0, 100)}`);
+                }
 
-              if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                throw new Error(`Invalid response: ${text.slice(0, 100)}`);
-              }
-              const result = await response.json();
-              if (result.success) {
-                // Update UI
-                actionField.value = 'update';
-                btnSubmit.textContent = 'AŽURIRAJ';
-                btnSubmit.classList.replace('btn-primary', 'btn-secondary');
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update UI
+                    actionField.value = 'update';
+                    btnSubmit.innerHTML = '<i class="fas fa-edit me-2"></i>Ažuriraj';
+                    btnSubmit.classList.remove('seup-btn-primary');
+                    btnSubmit.classList.add('seup-btn-secondary');
 
+                    // Update input values
+                    document.getElementById('code_ustanova').value = result.data.code_ustanova;
+                    document.getElementById('name_ustanova').value = result.data.name_ustanova;
 
-                // Update input values
-                document.getElementById('code_ustanova').value = result.data.code_ustanova;
-                document.getElementById('name_ustanova').value = result.data.name_ustanova;
-
-                // Show success message
-
-                showMessage(result.message, type = 'success');
-              } else {
-                showMessage(result.message, type = 'success');
-              }
+                    // Show success message
+                    showMessage(result.message, 'success');
+                } else {
+                    showMessage(result.error || 'Greška pri spremanju', 'error');
+                }
             } catch (error) {
-              console.error('Error:', error);
+                console.error('Error:', error);
+                showMessage('Došlo je do greške: ' + error.message, 'error');
+            } finally {
+                // Remove loading state
+                btnSubmit.classList.remove('seup-loading');
+                btnSubmit.disabled = false;
             }
-          });
         });
-      </script>
-    </div>
+    }
 
-    <!-- Desni stupac: unos klasifikacijske oznake -->
-    <div class="col-12 col-md-6">
-      <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <input type="hidden" id="hidden_id_klasifikacijske_oznake" name="id_klasifikacijske_oznake" value="">
-        <div class="custom-container bg-white shadow rounded-3 p-4">
-          <h5> <?php echo $langs->trans('Unos Klasifikacijske Oznake'); ?></h5>
+    // Enhanced autocomplete for klasifikacijske oznake
+    const input = document.getElementById('klasa_br');
+    const resultsContainer = document.getElementById('autocomplete-results');
+    const formFields = {
+        sadrzaj: document.getElementById('sadrzaj'),
+        dosje_br: document.getElementById('dosje_br'),
+        vrijeme_cuvanja: document.getElementById('vrijeme_cuvanja'),
+        opis_klasifikacije: document.getElementById('opis_klasifikacije')
+    };
 
-          <div class="mb-3">
-            <label for="klasa_br" class="form-label"><?php echo $langs->trans('Klasa Br:'); ?></label>
-            <input type="text" id="klasa_br" name="klasa_br" class="form-control" placeholder="<?php echo $langs->trans('Unesi Klasu'); ?>" pattern="\d{3}" maxlength="3" autocomplete="off">
-            <div id="autocomplete-results" class="autocomplete-dropdown"></div>
-          </div>
-
-          <div class="mb-3">
-            <label for="sadrzaj" class="form-label"><?php echo $langs->trans('Sadrzaj:'); ?></label>
-            <input type="text" id="sadrzaj" name="sadrzaj" class="form-control" placeholder="<?php echo $langs->trans('Unesi Sadrzaj'); ?>" pattern="\d{2}" maxlength="2">
-          </div>
-
-          <div class="mb-3">
-            <label for="dosje_br" class="form-label"><?php echo $langs->trans('Dosje Br:'); ?></label>
-            <select id="dosje_br" name="dosje_br" class="form-select">
-              <option value="" disabled selected hidden><?php echo $langs->trans('Izaberi Dosje'); ?></option>
-              <?php for ($i = 1; $i <= 50; $i++): $val = sprintf('%02d', $i); ?>
-                <option value="<?php echo $val; ?>"><?php echo $val; ?></option>
-              <?php endfor; ?>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="vrijeme_cuvanja" class="form-label"><?php echo $langs->trans('Vrijeme Cuvanja:'); ?></label>
-            <select id="vrijeme_cuvanja" name="vrijeme_cuvanja" class="form-select">
-              <option value="permanent"><?php echo $langs->trans('Trajno'); ?></option>
-              <?php for ($g = 1; $g <= 10; $g++): ?>
-                <option value="<?php echo $g; ?>"><?php echo $g . ' ' . $langs->trans('Godina'); ?></option>
-              <?php endfor; ?>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="opis_klasifikacije" class="form-label"><?php echo $langs->trans('Opis Klasifikacijske Oznake:'); ?></label>
-            <textarea id="opis_klasifikacije" name="opis_klasifikacije" class="form-control" rows="3" placeholder="<?php echo $langs->trans('Unesi Opis'); ?>"></textarea>
-          </div>
-
-          <div class="mt-3">
-            <button type="submit" name="action_klasifikacija" value="add" class="btn btn-primary me-2"><?php echo $langs->trans('DODAJ'); ?></button>
-            <button type="submit" name="action_klasifikacija" value="update" class="btn btn-secondary me-2"><?php echo $langs->trans('AŽURIRAJ'); ?></button>
-            <button type="submit" name="action_klasifikacija" value="delete" class="btn btn-danger"><?php echo $langs->trans('OBRIŠI'); ?></button>
-          </div>
-        </div>
-    </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const input = document.getElementById('klasa_br');
-        const resultsContainer = document.getElementById('autocomplete-results');
-        const formFields = {
-          sadrzaj: document.getElementById('sadrzaj'),
-          dosje_br: document.getElementById('dosje_br'),
-          vrijeme_cuvanja: document.getElementById('vrijeme_cuvanja'),
-          opis_klasifikacije: document.getElementById('opis_klasifikacije')
-        };
-
-        let debounceTimer;
-
+    if (input && resultsContainer) {
         input.addEventListener('input', debounce(function(e) {
-          const searchTerm = e.target.value.trim();
-          if (searchTerm.length >= 1) {
-            fetch('../class/autocomplete.php', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'query=' + encodeURIComponent(searchTerm)
-              })
-              .then(handleErrors)
-              .then(response => response.json())
-              .then(data => showResults(data))
-              .catch(error => console.error('Error:', error));
-          } else {
-            clearResults();
-          }
+            const searchTerm = e.target.value.trim();
+            if (searchTerm.length >= 1) {
+                fetch('../class/autocomplete.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'query=' + encodeURIComponent(searchTerm)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.statusText);
+                    return response.json();
+                })
+                .then(data => showResults(data))
+                .catch(error => {
+                    console.error('Autocomplete error:', error);
+                    clearResults();
+                });
+            } else {
+                clearResults();
+            }
         }, 300));
 
         function showResults(results) {
-          resultsContainer.innerHTML = '';
-          results.forEach(result => {
-            const div = document.createElement('div');
-            div.className = 'autocomplete-item';
-            div.textContent = result.klasa_br + ' - ' + result.sadrzaj + ' - ' + result.dosje_br;
-            div.dataset.id = result.id; // ID po kojem se drzimo za update i delete
-            div.dataset.record = JSON.stringify(result);
-            console.log('Result:', result);
-            div.addEventListener('click', () => populateForm(result));
-            resultsContainer.appendChild(div);
-          });
+            resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'block';
+            
+            if (results.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'seup-autocomplete-item';
+                div.innerHTML = '<div class="seup-autocomplete-main">Nema rezultata</div>';
+                resultsContainer.appendChild(div);
+                return;
+            }
+
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'seup-autocomplete-item';
+                div.innerHTML = `
+                    <div class="seup-autocomplete-main">${result.klasa_br}-${result.sadrzaj}/${result.dosje_br}</div>
+                    <div class="seup-autocomplete-desc">${result.opis_klasifikacije || 'Nema opisa'}</div>
+                `;
+                div.dataset.id = result.ID;
+                div.dataset.record = JSON.stringify(result);
+                div.addEventListener('click', () => populateForm(result));
+                resultsContainer.appendChild(div);
+            });
         }
 
         function populateForm(data) {
-          input.value = data.klasa_br;
-          formFields.sadrzaj.value = data.sadrzaj || '';
-          formFields.dosje_br.value = data.dosje_br || '';
-          formFields.vrijeme_cuvanja.value = data.vrijeme_cuvanja.toString() === '0' ? 'permanent' : data.vrijeme_cuvanja;
-          formFields.opis_klasifikacije.value = data.opis_klasifikacije || '';
-          // Store the original combination for update identification
-          if (!document.getElementById('hidden_id_klasifikacijske_oznake')) {
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.id = 'hidden_id_klasifikacijske_oznake';
-            hiddenInput.name = 'id_klasifikacijske_oznake';
-            document.querySelector('form').appendChild(hiddenInput);
-          }
-          // Store as JSON string
-          const combination = JSON.stringify({
-            klasa_br: data.klasa_br,
-            sadrzaj: data.sadrzaj,
-            dosje_br: data.dosje_br
-          });
-
-          document.getElementById('hidden_id_klasifikacijske_oznake').value = data.ID;
-          console.log('Set record ID:', data.ID);
-          clearResults();
-        }
-
-        function debounce(func, wait) {
-          let timeout;
-          return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-          };
-        }
-
-        function handleErrors(response) {
-          if (!response.ok) throw new Error(response.statusText);
-          return response;
+            input.value = data.klasa_br;
+            formFields.sadrzaj.value = data.sadrzaj || '';
+            formFields.dosje_br.value = data.dosje_br || '';
+            formFields.vrijeme_cuvanja.value = data.vrijeme_cuvanja.toString() === '0' ? 'permanent' : data.vrijeme_cuvanja;
+            formFields.opis_klasifikacije.value = data.opis_klasifikacije || '';
+            
+            document.getElementById('hidden_id_klasifikacijske_oznake').value = data.ID;
+            clearResults();
+            
+            // Visual feedback
+            input.style.borderColor = 'var(--success-500)';
+            setTimeout(() => {
+                input.style.borderColor = '';
+            }, 2000);
         }
 
         function clearResults() {
-          resultsContainer.innerHTML = '';
+            resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'none';
         }
 
         // Hide results when clicking outside
         document.addEventListener('click', function(e) {
-          if (!e.target.closest('.autocomplete-dropdown') && e.target !== input) {
-            resultsContainer.innerHTML = '';
-          }
+            if (!e.target.closest('.seup-autocomplete-container')) {
+                clearResults();
+            }
         });
-      });
-    </script>
-    </form>
-  </div>
+    }
 
-  <!-- Full-width opis -->
-  <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-    <div class="row">
-      <div class="col-12">
-        <div class="custom-container bg-light border border-2 border-dashed rounded-3 p-4">
-          <h4 class="text-center text-muted mb-3">
-            <i class="fas fa-align-left me-2"></i><?php echo $langs->trans('Opis'); ?>
-          </h4>
-          <div class="text-center text-muted"><?php echo $langs->trans('Opis Tekst'); ?></div>
-          <div class="text-center mt-3">
-            <button class="btn btn-primary btn-lg">
-              <i class="fas fa-download me-2"></i><?php echo $langs->trans('Preuzmi Dokumentaciju'); ?>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
+    // Enhanced message display
+    window.showMessage = function(message, type = 'success', duration = 5000) {
+        // Create or update message element
+        let messageEl = document.querySelector('.seup-message-toast');
+        if (!messageEl) {
+            messageEl = document.createElement('div');
+            messageEl.className = 'seup-message-toast';
+            document.body.appendChild(messageEl);
+        }
+
+        messageEl.className = `seup-message-toast seup-message-${type} show`;
+        messageEl.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+        `;
+
+        setTimeout(() => {
+            messageEl.classList.remove('show');
+        }, duration);
+    };
+});
+</script>
+
+<style>
+/* Toast messages */
+.seup-message-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-lg);
+    color: white;
+    font-weight: var(--font-medium);
+    box-shadow: var(--shadow-xl);
+    transform: translateX(400px);
+    transition: transform var(--transition-normal);
+    z-index: var(--z-tooltip);
+    max-width: 400px;
+}
+
+.seup-message-toast.show {
+    transform: translateX(0);
+}
+
+.seup-message-success {
+    background: linear-gradient(135deg, var(--success-500), var(--success-600));
+}
+
+.seup-message-error {
+    background: linear-gradient(135deg, var(--error-500), var(--error-600));
+}
+
+/* Loading state for buttons */
+.seup-btn.seup-loading {
+    position: relative;
+    color: transparent;
+}
+
+.seup-btn.seup-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced autocomplete */
+.seup-autocomplete-dropdown {
+    display: none;
+}
+
+.seup-autocomplete-dropdown.show {
+    display: block;
+}
+</style>
 
 <?php
-
 llxFooter();
 $db->close();
-
 ?>
