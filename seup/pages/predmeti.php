@@ -84,7 +84,6 @@ if (!in_array($sortField, $allowedSortFields)) {
 $sortOrder = ($sortOrder === 'ASC') ? 'ASC' : 'DESC';
 
 // Use helper to build ORDER BY
-require_once __DIR__ . '/../class/predmet_helper.class.php';
 $orderByClause = Predmet_helper::buildOrderByKlasa($sortField, $sortOrder);
 
 // Fetch all open cases with proper sorting
@@ -344,23 +343,23 @@ document.addEventListener("DOMContentLoaded", function() {
     
     if (noviPredmetBtn) {
         noviPredmetBtn.addEventListener("click", function() {
-            this.classList.add('seup-loading');
+            this.classList.add(\'seup-loading\');
             window.location.href = "novi_predmet.php";
         });
     }
     
     if (noviPredmetBtn2) {
         noviPredmetBtn2.addEventListener("click", function() {
-            this.classList.add('seup-loading');
+            this.classList.add(\'seup-loading\');
             window.location.href = "novi_predmet.php";
         });
     }
 
     // Enhanced search and filter functionality
-    const searchInput = document.getElementById('searchInput');
-    const filterUstanova = document.getElementById('filterUstanova');
-    const tableRows = document.querySelectorAll('.seup-table-row[data-id]');
-    const visibleCountSpan = document.getElementById('visibleCount');
+    const searchInput = document.getElementById(\'searchInput\');
+    const filterUstanova = document.getElementById(\'filterUstanova\');
+    const tableRows = document.querySelectorAll(\'.seup-table-row[data-id]\');
+    const visibleCountSpan = document.getElementById(\'visibleCount\');
 
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
@@ -368,8 +367,8 @@ document.addEventListener("DOMContentLoaded", function() {
         let visibleCount = 0;
 
         tableRows.forEach(row => {
-            const cells = row.querySelectorAll('.seup-table-td');
-            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            const cells = row.querySelectorAll(\'.seup-table-td\');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(\' \');
             
             // Check search term
             const matchesSearch = !searchTerm || rowText.includes(searchTerm);
@@ -382,14 +381,14 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             if (matchesSearch && matchesUstanova) {
-                row.style.display = '';
+                row.style.display = \'\';
                 visibleCount++;
                 // Add staggered animation
                 row.style.animationDelay = `${visibleCount * 50}ms`;
-                row.classList.add('animate-fade-in-up');
+                row.classList.add(\'animate-fade-in-up\');
             } else {
-                row.style.display = 'none';
-                row.classList.remove('animate-fade-in-up');
+                row.style.display = \'none\';
+                row.classList.remove(\'animate-fade-in-up\');
             }
         });
 
@@ -400,57 +399,57 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(filterTable, 300));
+        searchInput.addEventListener(\'input\', debounce(filterTable, 300));
     }
     
     if (filterUstanova) {
-        filterUstanova.addEventListener('change', filterTable);
+        filterUstanova.addEventListener(\'change\', filterTable);
     }
 
     // Enhanced row interactions
     tableRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateX(4px)';
+        row.addEventListener(\'mouseenter\', function() {
+            this.style.transform = \'translateX(4px)\';
         });
         
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateX(0)';
+        row.addEventListener(\'mouseleave\', function() {
+            this.style.transform = \'translateX(0)\';
         });
     });
 
     // Action button handlers
-    document.querySelectorAll('.seup-btn-edit').forEach(btn => {
-        btn.addEventListener('click', function() {
+    document.querySelectorAll(\'.seup-btn-edit\').forEach(btn => {
+        btn.addEventListener(\'click\', function() {
             const id = this.dataset.id;
-            this.classList.add('seup-loading');
+            this.classList.add(\'seup-loading\');
             // Navigate to edit page
             window.location.href = `predmet.php?id=${id}&action=edit`;
         });
     });
 
-    document.querySelectorAll('.seup-btn-archive').forEach(btn => {
-        btn.addEventListener('click', function() {
+    document.querySelectorAll(\'.seup-btn-archive\').forEach(btn => {
+        btn.addEventListener(\'click\', function() {
             const id = this.dataset.id;
-            if (confirm('Jeste li sigurni da želite arhivirati ovaj predmet?')) {
-                this.classList.add('seup-loading');
+            if (confirm(\'Jeste li sigurni da želite arhivirati ovaj predmet?\')) {
+                this.classList.add(\'seup-loading\');
                 // Implement archive functionality
-                console.log('Archive predmet:', id);
-                showMessage('Predmet je arhiviran', 'success');
+                console.log(\'Archive predmet:\', id);
+                showMessage(\'Predmet je arhiviran\', \'success\');
             }
         });
     });
 
     // Export and print handlers
-    document.getElementById('exportBtn').addEventListener('click', function() {
-        this.classList.add('seup-loading');
+    document.getElementById(\'exportBtn\').addEventListener(\'click\', function() {
+        this.classList.add(\'seup-loading\');
         // Implement export functionality
         setTimeout(() => {
-            this.classList.remove('seup-loading');
-            showMessage('Excel izvoz je pokrenut', 'success');
+            this.classList.remove(\'seup-loading\');
+            showMessage(\'Excel izvoz je pokrenut\', \'success\');
         }, 2000);
     });
 
-    document.getElementById('printBtn').addEventListener('click', function() {
+    document.getElementById(\'printBtn\').addEventListener(\'click\', function() {
         window.print();
     });
 
@@ -464,36 +463,34 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Toast message function
-    window.showMessage = function(message, type = 'success', duration = 5000) {
-        let messageEl = document.querySelector('.seup-message-toast');
+    window.showMessage = function(message, type = \'success\', duration = 5000) {
+        let messageEl = document.querySelector(\'.seup-message-toast\');
         if (!messageEl) {
-            messageEl = document.createElement('div');
-            messageEl.className = 'seup-message-toast';
+            messageEl = document.createElement(\'div\');
+            messageEl.className = \'seup-message-toast\';
             document.body.appendChild(messageEl);
         }
 
         messageEl.className = `seup-message-toast seup-message-${type} show`;
         messageEl.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            <i class="fas fa-${type === \'success\' ? \'check-circle\' : \'exclamation-triangle\'} me-2"></i>
             ${message}
         `;
 
         setTimeout(() => {
-            messageEl.classList.remove('show');
+            messageEl.classList.remove(\'show\');
         }, duration);
     };
 
     // Initial staggered animation for existing rows
     tableRows.forEach((row, index) => {
         row.style.animationDelay = `${index * 100}ms`;
-        row.classList.add('animate-fade-in-up');
+        row.classList.add(\'animate-fade-in-up\');
     });
 });
 ';
 print '</script>';
-?>
 
-<?php
 llxFooter();
 $db->close();
 ?>
