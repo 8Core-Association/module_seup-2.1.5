@@ -500,6 +500,35 @@ class Predmet_helper
                     ON DELETE RESTRICT
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             ],
+
+            'a_arhiva' => [
+                'sql' => "CREATE TABLE IF NOT EXISTS `" . MAIN_DB_PREFIX . "a_arhiva` (
+                `ID_arhive` INT(11) NOT NULL AUTO_INCREMENT,
+                `ID_predmeta` INT(11) NOT NULL,
+                `klasa_predmeta` VARCHAR(50) NOT NULL COMMENT 'Format: 001-01/25-01/1',
+                `naziv_predmeta` VARCHAR(500) NOT NULL,
+                `lokacija_arhive` VARCHAR(255) NOT NULL COMMENT 'Path to archive folder',
+                `broj_dokumenata` INT(11) DEFAULT 0,
+                `razlog_arhiviranja` TEXT DEFAULT NULL,
+                `datum_arhiviranja` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `fk_user_arhivirao` INT(11) NOT NULL,
+                `status_arhive` ENUM('active','deleted','corrupted') DEFAULT 'active',
+                `metadata_json` TEXT DEFAULT NULL COMMENT 'Additional metadata as JSON',
+                PRIMARY KEY (`ID_arhive`),
+                UNIQUE KEY `unique_predmet_arhiva` (`ID_predmeta`),
+                KEY `idx_klasa_predmeta` (`klasa_predmeta`),
+                KEY `idx_datum_arhiviranja` (`datum_arhiviranja`),
+                KEY `fk_user_arhivirao` (`fk_user_arhivirao`),
+                CONSTRAINT `fk_arhiva_predmet` 
+                    FOREIGN KEY (`ID_predmeta`) 
+                    REFERENCES `" . MAIN_DB_PREFIX . "a_predmet` (`ID_predmeta`)
+                    ON DELETE CASCADE,
+                CONSTRAINT `fk_arhiva_user` 
+                    FOREIGN KEY (`fk_user_arhivirao`) 
+                    REFERENCES `" . MAIN_DB_PREFIX . "user` (`rowid`)
+                    ON DELETE RESTRICT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+            ],
         ];
 
         // Disable foreign key checks temporarily
@@ -678,5 +707,182 @@ class Predmet_helper
             WHERE ID_klasifikacijske_oznake = " . (int)$id;
         $res = $db->query($sql);
         return ($res && $db->num_rows($res) > 0);
+    }
+
+    /**
+     * Archive a predmet - move documents and create archive record
+     */
+    public static function archivePredmet($db, $conf, $user, $predmet_id, $razlog = null)
+    {
+        $predmet_id = (int)$predmet_id;
+        
+        // Start transaction
+        $db->begin();
+        
+        try {
+            // 1. Get predmet details
+            $sql = "SELECT 
+                        p.ID_predmeta,
+                        CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                        p.naziv_predmeta,
+                        p.klasa_br,
+                        p.sadrzaj,
+                        p.dosje_broj,
+                        p.godina,
+                        p.predmet_rbr
+                    FROM " . MAIN_DB_PREFIX . "a_predmet p
+                    WHERE p.ID_predmeta = $predmet_id";
+            
+            $resql = $db->query($sql);
+            if (!$resql || $db->num_rows($resql) == 0) {
+                throw new Exception("Predmet not found");
+            }
+            
+            $predmet = $db->fetch_object($resql);
+            
+            // 2. Check if already archived
+            $sql = "SELECT ID_arhive FROM " . MAIN_DB_PREFIX . "a_arhiva WHERE ID_predmeta = $predmet_id";
+            $resql = $db->query($sql);
+            if ($resql && $db->num_rows($resql) > 0) {
+                throw new Exception("Predmet je već arhiviran");
+            }
+            
+            // 3. Create archive directory structure
+            $archive_base = DOL_DATA_ROOT . '/ecm/SEUP/Arhiva/';
+            $archive_dir = $archive_base . $predmet->klasa . '/';
+            
+            if (!dol_mkdir($archive_dir)) {
+                throw new Exception("Cannot create archive directory: $archive_dir");
+            }
+            
+            // 4. Move documents from predmet to archive
+            $source_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+            $moved_files = 0;
+            
+            if (is_dir($source_dir)) {
+                $files = scandir($source_dir);
+                foreach ($files as $file) {
+                    if ($file != '.' && $file != '..') {
+                        $source_file = $source_dir . $file;
+                        $dest_file = $archive_dir . $file;
+                        
+                        if (copy($source_file, $dest_file)) {
+                            unlink($source_file); // Remove original
+                            $moved_files++;
+                        }
+                    }
+                }
+                
+                // Remove empty source directory
+                if (count(scandir($source_dir)) == 2) { // Only . and ..
+                    rmdir($source_dir);
+                }
+            }
+            
+            // 5. Update ECM files table
+            $sql = "UPDATE " . MAIN_DB_PREFIX . "ecm_files 
+                    SET filepath = 'SEUP/Arhiva/" . $db->escape($predmet->klasa) . "/'
+                    WHERE filepath LIKE 'SEUP/predmet_" . $predmet_id . "%'";
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to update ECM files: " . $db->lasterror());
+            }
+            
+            // 6. Create metadata JSON
+            $metadata = [
+                'predmet_id' => $predmet_id,
+                'klasa' => $predmet->klasa,
+                'naziv' => $predmet->naziv_predmeta,
+                'arhiviran' => date('Y-m-d H:i:s'),
+                'korisnik' => $user->firstname . ' ' . $user->lastname,
+                'broj_dokumenata' => $moved_files,
+                'source_directory' => 'SEUP/predmet_' . $predmet_id
+            ];
+            
+            // Save metadata file
+            $metadata_file = $archive_dir . 'metadata.json';
+            file_put_contents($metadata_file, json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            
+            // 7. Insert archive record
+            $sql = "INSERT INTO " . MAIN_DB_PREFIX . "a_arhiva (
+                        ID_predmeta,
+                        klasa_predmeta,
+                        naziv_predmeta,
+                        lokacija_arhive,
+                        broj_dokumenata,
+                        razlog_arhiviranja,
+                        fk_user_arhivirao,
+                        metadata_json
+                    ) VALUES (
+                        $predmet_id,
+                        '" . $db->escape($predmet->klasa) . "',
+                        '" . $db->escape($predmet->naziv_predmeta) . "',
+                        'SEUP/Arhiva/" . $db->escape($predmet->klasa) . "/',
+                        $moved_files,
+                        " . ($razlog ? "'" . $db->escape($razlog) . "'" : "NULL") . ",
+                        " . $user->id . ",
+                        '" . $db->escape(json_encode($metadata)) . "'
+                    )";
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to create archive record: " . $db->lasterror());
+            }
+            
+            // 8. Mark predmet as archived (add status column if needed)
+            $sql = "UPDATE " . MAIN_DB_PREFIX . "a_predmet 
+                    SET tstamp_updated = CURRENT_TIMESTAMP 
+                    WHERE ID_predmeta = $predmet_id";
+            
+            $db->query($sql); // Non-critical update
+            
+            $db->commit();
+            
+            return [
+                'success' => true,
+                'message' => "Predmet uspješno arhiviran",
+                'archive_path' => $archive_dir,
+                'files_moved' => $moved_files,
+                'klasa' => $predmet->klasa
+            ];
+            
+        } catch (Exception $e) {
+            $db->rollback();
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get archived predmeti
+     */
+    public static function getArchivedPredmeti($db, $limit = 50)
+    {
+        $sql = "SELECT 
+                    a.ID_arhive,
+                    a.klasa_predmeta,
+                    a.naziv_predmeta,
+                    a.broj_dokumenata,
+                    a.datum_arhiviranja,
+                    a.razlog_arhiviranja,
+                    u.firstname,
+                    u.lastname
+                FROM " . MAIN_DB_PREFIX . "a_arhiva a
+                LEFT JOIN " . MAIN_DB_PREFIX . "user u ON a.fk_user_arhivirao = u.rowid
+                WHERE a.status_arhive = 'active'
+                ORDER BY a.datum_arhiviranja DESC
+                LIMIT $limit";
+        
+        $resql = $db->query($sql);
+        $archived = [];
+        
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $archived[] = $obj;
+            }
+        }
+        
+        return $archived;
     }
 }
