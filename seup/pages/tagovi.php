@@ -67,6 +67,10 @@ $error = 0;
 $success = 0;
 $tag_name = '';
 
+// Ensure database tables exist
+require_once __DIR__ . '/../class/predmet_helper.class.php';
+Predmet_helper::createSeupDatabaseTables($db);
+
 if ($action == 'addtag' && !empty($_POST['tag'])) {
     $tag_name = GETPOST('tag', 'alphanohtml');
     $tag_color = GETPOST('tag_color', 'alpha');
@@ -79,9 +83,9 @@ if ($action == 'addtag' && !empty($_POST['tag'])) {
         $db->begin();
 
         // Check if tag already exists
-        $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "a_tagovi";
-        $sql .= " WHERE tag = '" . $db->escape($tag_name) . "'";
-        $sql .= " AND entity = " . $conf->entity;
+        $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "a_tagovi
+                WHERE tag = '" . $db->escape($tag_name) . "'
+                AND entity = " . $conf->entity;
 
         $resql = $db->query($sql);
         if ($resql) {
@@ -90,13 +94,15 @@ if ($action == 'addtag' && !empty($_POST['tag'])) {
                 setEventMessages($langs->trans('ErrorTagAlreadyExists'), null, 'errors');
             } else {
                 // Insert new tag with color
-                $sql = "INSERT INTO " . MAIN_DB_PREFIX . "a_tagovi";
-                $sql .= " (tag, color, entity, date_creation, fk_user_creat)";
-                $sql .= " VALUES ('" . $db->escape($tag_name) . "',";
-                $sql .= " '" . $db->escape($tag_color) . "',";
-                $sql .= " " . $conf->entity . ",";
-                $sql .= " '" . $db->idate(dol_now()) . "',";
-                $sql .= " " . $user->id . ")";
+                $sql = "INSERT INTO " . MAIN_DB_PREFIX . "a_tagovi 
+                        (tag, color, entity, date_creation, fk_user_creat) 
+                        VALUES (
+                            '" . $db->escape($tag_name) . "',
+                            '" . $db->escape($tag_color) . "',
+                            " . $conf->entity . ",
+                            '" . $db->idate(dol_now()) . "',
+                            " . $user->id . "
+                        )";
 
                 $resql = $db->query($sql);
                 if ($resql) {
@@ -124,15 +130,15 @@ if ($action == 'deletetag') {
         $db->begin();
 
         // First delete associations in a_predmet_tagovi
-        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_predmet_tagovi";
-        $sql .= " WHERE fk_tag = " . $tagid;
+        $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_predmet_tagovi
+                WHERE fk_tag = " . $tagid;
         $resql = $db->query($sql);
 
         if ($resql) {
             // Then delete the tag itself
-            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_tagovi";
-            $sql .= " WHERE rowid = " . $tagid;
-            $sql .= " AND entity = " . $conf->entity;
+            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_tagovi
+                    WHERE rowid = " . $tagid . "
+                    AND entity = " . $conf->entity;
 
             $resql = $db->query($sql);
             if ($resql) {
@@ -253,10 +259,10 @@ print '</div>';
 print '<div class="seup-tags-list animate-fade-in-up">';
 
 // Fetch existing tags with colors
-$sql = "SELECT rowid, tag, color, date_creation";
-$sql .= " FROM " . MAIN_DB_PREFIX . "a_tagovi";
-$sql .= " WHERE entity = " . $conf->entity;
-$sql .= " ORDER BY tag ASC";
+$sql = "SELECT rowid, tag, color, date_creation
+        FROM " . MAIN_DB_PREFIX . "a_tagovi
+        WHERE entity = " . $conf->entity . "
+        ORDER BY tag ASC";
 
 $resql = $db->query($sql);
 $tags = [];
@@ -264,6 +270,9 @@ if ($resql) {
     while ($obj = $db->fetch_object($resql)) {
         $tags[] = $obj;
     }
+} else {
+    dol_syslog("Error fetching tags: " . $db->lasterror(), LOG_ERR);
+    setEventMessages("Greška pri dohvaćanju oznaka: " . $db->lasterror(), null, 'errors');
 }
 
 // Header with stats
