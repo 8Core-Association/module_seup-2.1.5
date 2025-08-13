@@ -104,10 +104,14 @@ $formfile = new FormFile($db);
 
 llxHeader("", "", '', '', 0, 0, '', '', '', 'mod-seup page-index');
 
-// Bootstrap i CSS
+// Modern design assets
 print '<meta name="viewport" content="width=device-width, initial-scale=1">';
-print '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">';
-print '<link href="../css/style.css" rel="stylesheet">';
+print '<link rel="preconnect" href="https://fonts.googleapis.com">';
+print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
+print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
+print '<link href="/custom/seup/css/style.css" rel="stylesheet">';
 
 require_once __DIR__ . '/../class/klasifikacijska_oznaka.class.php';
 require_once __DIR__ . '/../class/oznaka_ustanove.class.php';
