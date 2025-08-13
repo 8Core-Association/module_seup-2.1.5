@@ -135,7 +135,7 @@ for ($i = 1; $i <= 5; $i++) {
 print '</div>';
 
 print '<div class="seup-hero-content">';
-print '<h1 class="seup-hero-title">Elektronski sustav uredskog poslovanja</h1>';
+print '<h1 class="seup-hero-title">Sustav elektronskog uredskog poslovanja</h1>';
 print '<p class="seup-hero-subtitle">Moderan i efikasan način upravljanja dokumentima, predmetima i administrativnim procesima u javnoj upravi</p>';
 
 // Action cards
@@ -200,13 +200,6 @@ print '</div>'; // seup-stats
 
 print '</div>'; // seup-hero-content
 print '</main>';
-
-// Navigation indicator
-print '<div class="seup-nav-indicator">';
-print '<a href="' . dol_buildpath('/custom/seup/pages/novi_predmet.php', 1) . '" class="seup-btn seup-btn-primary">';
-print '<i class="fas fa-arrow-right"></i>';
-print '</a>';
-print '</div>';
 
 // Pass stats to JavaScript
 print '<script>';

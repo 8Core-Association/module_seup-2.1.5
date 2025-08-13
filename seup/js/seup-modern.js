@@ -245,51 +245,6 @@ const additionalStyles = `
   height: 32px;
   border: 3px solid var(--primary-200);
   border-top: 3px solid var(--primary-600);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: var(--space-2);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.keyboard-navigation .seup-action-card:focus {
-  outline: 3px solid var(--primary-500);
-  outline-offset: 2px;
-}
-
-/* Enhanced hover effects */
-.seup-action-card {
-  position: relative;
-  z-index: 1;
-}
-
-.seup-action-card:hover {
-  z-index: 2;
-}
-
-/* Improved contrast for better readability */
-.seup-hero-title {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.seup-hero-subtitle {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
 `;
 
 // Inject additional styles
