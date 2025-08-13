@@ -130,7 +130,12 @@ print '<main class="seup-hero">';
 // Copyright footer
 print '<footer class="seup-footer">';
 print '<div class="seup-footer-content">';
+print '<div class="seup-footer-left">';
 print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '<div class="seup-footer-right">';
+print '<p class="seup-version">SEUP v.14.0.4</p>';
+print '</div>';
 print '</div>';
 print '</footer>';
 
