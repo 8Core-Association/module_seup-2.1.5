@@ -1,12 +1,53 @@
-# SEUP FOR [DOLIBARR ERP & CRM](https://www.dolibarr.org)
+# SEUP - Sustav Elektronskog Uredskog Poslovanja
 
-## Features
+**Moderni modul za upravljanje dokumentima i predmetima u javnoj upravi**
 
-Description of the module...
+## 🚀 Značajke
 
-<!--
-![Screenshot seup](img/screenshot_seup.png?raw=true "SEUP"){imgmd}
--->
+- **📁 Upravljanje predmetima** - Kreiranje i praćenje predmeta s klasifikacijskim oznakama
+- **📄 Upravljanje dokumentima** - Upload, pregled i organizacija dokumenata
+- **🏢 Oznake ustanova** - Konfiguracija osnovnih podataka ustanove
+- **👥 Interne oznake korisnika** - Upravljanje korisničkim oznakama i radnim mjestima
+- **🗂️ Plan klasifikacijskih oznaka** - Hijerarhijski sustav klasifikacije
+- **🏷️ Tagovi** - Fleksibilno označavanje s color pickerom
+- **📊 Statistike** - Pregled aktivnosti i izvještaji
+- **🎨 Moderni UI** - Responzivni dizajn s naprednim animacijama
+
+## 📋 Funkcionalnosti
+
+### Predmeti
+- Kreiranje novih predmeta s automatskim generiranjem rednih brojeva
+- Povezivanje s klasifikacijskim oznakama i zaposlenicima
+- Upravljanje prilozima i dokumentima
+- Praćenje datuma otvaranja i statusa
+
+### Dokumenti
+- Upload dokumenata (DOCX, XLSX, PDF, slike)
+- Automatska organizacija u direktorije po predmetima
+- Pregled i download dokumenata
+- Integracija s ECM sustavom
+
+### Administracija
+- Postavke oznaka ustanova (format: 0000-0-0)
+- Upravljanje korisničkim oznakama (0-99)
+- Plan klasifikacijskih oznaka s vremenom čuvanja
+- Tagovi s color pickerom za kategorizaciju
+
+## 🎨 Dizajn
+
+- **Apple-level estetika** - Čist, sofisticiran dizajn
+- **Responzivni layout** - Optimizirano za sve uređaje
+- **Animacije i micro-interakcije** - Smooth UX
+- **Accessibility** - Keyboard navigation i screen reader podrška
+- **Dark/Light mode** - Automatska detekcija preferencija
+
+## 🛠️ Tehnologije
+
+- **Backend**: PHP 7.1+, MySQL/MariaDB
+- **Frontend**: HTML5, CSS3, JavaScript ES6+
+- **Framework**: Dolibarr ERP & CRM
+- **UI**: Font Awesome 6, Inter font, CSS Grid/Flexbox
+- **Security**: CSRF protection, SQL injection prevention
 
 Other external modules are available on [Dolistore.com](https://www.dolistore.com).
 
