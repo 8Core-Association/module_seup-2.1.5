@@ -173,6 +173,7 @@ print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
 print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
 print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
 print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
+print '<link href="/custom/seup/css/novi-predmet.css" rel="stylesheet">';
 print '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />';
 print '<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>';
 print '<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
@@ -383,190 +384,501 @@ print '</div>';
 // JavaScript for enhanced functionality
 print '<script src="/custom/seup/js/seup-modern.js"></script>';
 
-// End of page
-llxFooter();
-$db->close();
 ?>
 
-<style>
-/* Novi Predmet specific styles */
-.seup-klasa-display {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-6);
-  margin-bottom: var(--space-8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: var(--shadow-lg);
-}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Get the select elements and klasa value element
+    const klasaMap = JSON.parse('<?php echo $klasaMapJson; ?>');
+    console.log("KlasaMap loaded:", klasaMap);
+    
+    var klasaSelect = document.getElementById("klasa_br");
+    var sadrzajSelect = document.getElementById("sadrzaj");
+    const dosjeSelect = document.getElementById("dosjeBroj");
+    var zaposlenikSelect = document.getElementById("zaposlenik");
+    var klasaValue = document.getElementById("klasa-value");
+    const otvoriPredmetBtn = document.getElementById("otvoriPredmetBtn");
 
-.seup-klasa-content {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
+    // Character counter for naziv
+    const nazivTextarea = document.getElementById("naziv");
+    const charCount = document.getElementById("charCount");
+    const charCounter = document.querySelector(".seup-char-counter");
 
-.seup-klasa-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
-}
+    if (nazivTextarea && charCount) {
+        nazivTextarea.addEventListener("input", function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            charCounter.classList.remove("warning", "danger");
+            if (count > 400) {
+                charCounter.classList.add("danger");
+            } else if (count > 300) {
+                charCounter.classList.add("warning");
+            }
+        });
+    }
 
-.seup-klasa-text {
-  flex: 1;
-}
+    // Modal functionality
+    const dateModal = document.getElementById("dateModal");
+    const tagsModal = document.getElementById("tagsModal");
+    let currentDateTarget = null;
+    let selectedTags = new Set();
+    let tempSelectedTags = new Set();
+    let selectedDate = null;
 
-.seup-klasa-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--secondary-900);
-  margin-bottom: var(--space-1);
-}
+    // Date picker functionality
+    document.getElementById("datumOtvaranjaBtn").addEventListener("click", function() {
+        currentDateTarget = "datumOtvaranja";
+        showDateModal();
+    });
 
-.seup-klasa-value {
-  font-size: var(--text-xl);
-  font-weight: var(--font-bold);
-  color: var(--primary-600);
-  font-family: var(--font-family-mono);
-  margin: 0;
-}
+    document.getElementById("strankaDatumBtn").addEventListener("click", function() {
+        currentDateTarget = "strankaDatum";
+        showDateModal();
+    });
 
-/* Form Container */
-.seup-form-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-}
+    // Tags functionality
+    document.getElementById("tagsBtn").addEventListener("click", function() {
+        tempSelectedTags = new Set(selectedTags);
+        updateTagsModal();
+        showTagsModal();
+    });
 
-/* Stranka Container */
-.seup-stranka-container {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-}
+    function showDateModal() {
+        dateModal.classList.add("show");
+        initCalendar();
+    }
 
-.seup-checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
-}
+    function hideDateModal() {
+        dateModal.classList.remove("show");
+    }
 
-.seup-checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary-500);
-}
+    function showTagsModal() {
+        tagsModal.classList.add("show");
+    }
 
-.seup-checkbox-label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--secondary-700);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
+    function hideTagsModal() {
+        tagsModal.classList.remove("show");
+    }
 
-/* Date Container */
-.seup-date-container {
-  margin-top: var(--space-3);
-  padding: var(--space-3);
-  background: var(--primary-50);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--primary-200);
-}
+    function initCalendar() {
+        const container = document.getElementById("calendar-container");
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        container.innerHTML = createCalendarHTML(currentYear, currentMonth);
+        
+        // Add click handlers to dates
+        container.querySelectorAll(".calendar-date").forEach(date => {
+            date.addEventListener("click", function() {
+                container.querySelectorAll(".calendar-date").forEach(d => d.classList.remove("selected"));
+                this.classList.add("selected");
+                selectedDate = this.dataset.date;
+            });
+        });
+    }
 
-/* Date Button */
-.seup-date-btn {
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--neutral-300);
-  border-radius: var(--radius-lg);
-  background: white;
-  color: var(--secondary-700);
-  font-size: var(--text-base);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    function createCalendarHTML(year, month) {
+        const monthNames = ["Siječanj", "Veljača", "Ožujak", "Travanj", "Svibanj", "Lipanj",
+                           "Srpanj", "Kolovoz", "Rujan", "Listopad", "Studeni", "Prosinac"];
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        let html = `
+            <div class="calendar-header">
+                <h5>${monthNames[month]} ${year}</h5>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-header">Pon</div>
+                <div class="calendar-day-header">Uto</div>
+                <div class="calendar-day-header">Sri</div>
+                <div class="calendar-day-header">Čet</div>
+                <div class="calendar-day-header">Pet</div>
+                <div class="calendar-day-header">Sub</div>
+                <div class="calendar-day-header">Ned</div>
+        `;
+        
+        // Empty cells for days before month starts
+        for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+            html += '<div class="calendar-empty"></div>';
+        }
+        
+        // Days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = (day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
+            html += `<div class="calendar-date ${isToday ? 'today' : ''}" data-date="${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}">${day}</div>`;
+        }
+        
+        html += '</div>';
+        return html;
+    }
 
-.seup-date-btn:hover {
-  border-color: var(--primary-500);
-  background: var(--primary-50);
-  color: var(--primary-700);
-}
+    function updateTagsModal() {
+        document.querySelectorAll(".seup-tag-option").forEach(tag => {
+            const tagId = tag.dataset.tagId;
+            if (tempSelectedTags.has(tagId)) {
+                tag.classList.add("selected");
+            } else {
+                tag.classList.remove("selected");
+            }
+        });
+    }
 
-.seup-date-btn.selected {
-  background: var(--primary-500);
-  color: white;
-  border-color: var(--primary-500);
-}
+    function updateSelectedTagsDisplay() {
+        const container = document.getElementById("selected-tags");
+        container.innerHTML = "";
+        
+        selectedTags.forEach(tagId => {
+            const tagElement = document.querySelector(`[data-tag-id="${tagId}"]`);
+            if (tagElement) {
+                const tagName = tagElement.textContent.trim();
+                const tagBadge = document.createElement("div");
+                tagBadge.className = "seup-selected-tag";
+                tagBadge.innerHTML = `
+                    <i class="fas fa-tag me-1"></i>
+                    ${tagName}
+                    <button type="button" class="seup-tag-remove" data-tag-id="${tagId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(tagBadge);
+            }
+        });
+        
+        // Update button text
+        const tagsBtn = document.getElementById("tagsBtn");
+        if (selectedTags.size > 0) {
+            tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odabrano: ${selectedTags.size} oznaka`;
+            tagsBtn.classList.add("selected");
+        } else {
+            tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odaberi oznake`;
+            tagsBtn.classList.remove("selected");
+        }
+    }
 
-/* Tags Button */
-.seup-tags-btn {
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--neutral-300);
-  border-radius: var(--radius-lg);
-  background: white;
-  color: var(--secondary-700);
-  font-size: var(--text-base);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    // Modal event listeners
+    document.getElementById("closeDateModal").addEventListener("click", hideDateModal);
+    document.getElementById("cancelDate").addEventListener("click", hideDateModal);
+    document.getElementById("closeTagsModal").addEventListener("click", hideTagsModal);
+    document.getElementById("cancelTags").addEventListener("click", hideTagsModal);
 
-.seup-tags-btn:hover {
-  border-color: var(--accent-500);
-  background: var(--accent-50);
-  color: var(--accent-700);
-}
+    document.getElementById("confirmDate").addEventListener("click", function() {
+        if (selectedDate) {
+            const [year, month, day] = selectedDate.split("-");
+            const formattedDate = `${day}.${month}.${year}`;
+            
+            if (currentDateTarget === "datumOtvaranja") {
+                document.getElementById("datumOtvaranjaValue").value = selectedDate;
+                document.getElementById("datumOtvaranjaBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
+                document.getElementById("datumOtvaranjaBtn").classList.add("selected");
+            } else if (currentDateTarget === "strankaDatum") {
+                document.getElementById("strankaDatumValue").value = selectedDate;
+                document.getElementById("strankaDatumBtn").innerHTML = `<i class="fas fa-calendar-check me-2"></i>${formattedDate}`;
+                document.getElementById("strankaDatumBtn").classList.add("selected");
+            }
+        }
+        hideDateModal();
+    });
 
-/* Selected Tags */
-.seup-selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  min-height: 40px;
-  padding: var(--space-2);
-  border: 1px dashed var(--neutral-300);
-  border-radius: var(--radius-lg);
-  background: var(--neutral-50);
-}
+    document.getElementById("confirmTags").addEventListener("click", function() {
+        selectedTags = new Set(tempSelectedTags);
+        updateSelectedTagsDisplay();
+        hideTagsModal();
+    });
 
-.seup-selected-tag {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background: var(--accent-100);
-  color: var(--accent-800);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-}
+    // Tag selection in modal
+    document.addEventListener("click", function(e) {
+        if (e.target.closest(".seup-tag-option")) {
+            const tagOption = e.target.closest(".seup-tag-option");
+            const tagId = tagOption.dataset.tagId;
+            
+            if (tempSelectedTags.has(tagId)) {
+                tempSelectedTags.delete(tagId);
+                tagOption.classList.remove("selected");
+            } else {
+                tempSelectedTags.add(tagId);
+                tagOption.classList.add("selected");
+            }
+        }
+        
+        // Remove tag from selected
+        if (e.target.closest(".seup-tag-remove")) {
+            const tagId = e.target.closest(".seup-tag-remove").dataset.tagId;
+            selectedTags.delete(tagId);
+            updateSelectedTagsDisplay();
+        }
+    });
 
-.seup-tag-remove {
-  background: none;
-  border: none;
-  color: var(--accent-600);
-  cursor: pointer;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
+    // Close modals on outside click
+    window.addEventListener("click", function(e) {
+        if (e.target === dateModal) hideDateModal();
+        if (e.target === tagsModal) hideTagsModal();
+    });
+
+    // Stranka autocomplete functionality
+    const strankaInput = document.getElementById('stranka');
+    let lastSearchTerm = '';
+
+    document.getElementById('strankaCheck').addEventListener('change', function() {
+        const selectField = document.getElementById('stranka');
+        const errorDiv = document.getElementById('strankaError');
+        const container = document.getElementById('strankaDatumContainer');
+
+        if (this.checked) {
+            selectField.disabled = false;
+            selectField.required = true;
+
+            if (!selectField.hasAttribute('data-select2-id')) {
+                jQuery(selectField).select2({
+                    placeholder: "OIB ili naziv stranke",
+                    allowClear: true,
+                    ajax: {
+                        url: 'novi_predmet.php?ajax=autocomplete_stranka',
+                        dataType: 'json',
+                        delay: 300,
+                        data: function(params) {
+                            return { term: params.term };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: data.map(item => ({
+                                    id: item.label,
+                                    text: item.label + (item.vat ? ' (' + item.vat + ')' : '')
+                                }))
+                            };
+                        },
+                        cache: true
+                    },
+                    minimumInputLength: 2
+                });
+            }
+
+            errorDiv.style.display = 'none';
+            selectField.classList.remove('is-invalid');
+            container.style.display = 'block';
+            selectField.focus();
+        } else {
+            if (selectField.hasAttribute('data-select2-id')) {
+                $(selectField).select2('destroy');
+            }
+            selectField.disabled = true;
+            selectField.required = false;
+            selectField.innerHTML = '';
+            errorDiv.style.display = 'none';
+            selectField.classList.remove('is-invalid');
+            container.style.display = 'none';
+            
+            // Clear date
+            document.getElementById("strankaDatumValue").value = '';
+            document.getElementById("strankaDatumBtn").innerHTML = '<i class="fas fa-calendar-alt me-2"></i>Odaberi datum';
+            document.getElementById("strankaDatumBtn").classList.remove("selected");
+        }
+    });
+
+    // Check if elements are present
+    if (!klasaSelect || !sadrzajSelect || !zaposlenikSelect || !klasaValue) {
+        console.error("Required elements not found in DOM.");
+        return;
+    }
+
+    var klasaText = <?php echo json_encode($klasa_text); ?>;
+
+    // State for keeping track of current values
+    var currentValues = {
+        klasa: "",
+        sadrzaj: "",
+        dosje: "",
+        rbr: "1"
+    };
+
+    let year = new Date().getFullYear();
+    year = year.toString().slice(-2);
+
+    function updateKlasaValue() {
+        const klasa = currentValues.klasa || "OZN";
+        const sadrzaj = currentValues.sadrzaj || "SAD";
+        const selectedDosje = dosjeSelect.value || "DOS";
+        const rbr = currentValues.rbr || "1";
+
+        const updatedText = `KLASA: ${klasa}-${sadrzaj}/${year}-${selectedDosje}/${rbr}`;
+        klasaValue.textContent = updatedText;
+    }
+
+    function checkIfPredmetExists() {
+        var klasa = klasaSelect.value || "OZN";
+        var sadrzaj = sadrzajSelect.value || "SAD";
+        var dosje_br = dosjeSelect.value || "DOS";
+        
+        if (klasa !== "OZN" && sadrzaj !== "SAD" && dosje_br !== "DOS") {
+            fetch(
+                "novi_predmet.php?ajax=1&" +
+                "klasa_br=" + encodeURIComponent(klasa) +
+                "&sadrzaj=" + encodeURIComponent(sadrzaj) +
+                "&dosje_br=" + encodeURIComponent(dosje_br) +
+                "&god=" + encodeURIComponent(year), {
+                    headers: { "Accept": "application/json" }
+                }
+            )
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "exists" || data.status === "inserted") {
+                    currentValues.rbr = data.next_rbr;
+                    updateKlasaValue();
+                }
+            })
+            .catch(error => console.error("Error checking predmet:", error));
+        }
+    }
+
+    function resetKlasaDisplay() {
+        currentValues = { klasa: "", sadrzaj: "", dosje: "", rbr: "1", zaposlenik: "" };
+        klasaSelect.value = "";
+        sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
+        dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
+        zaposlenikSelect.value = "";
+        updateKlasaValue();
+    }
+
+    // Update on klasa change
+    if (klasaSelect) {
+        klasaSelect.addEventListener("change", function() {
+            currentValues.klasa = this.value || "";
+            currentValues.dosje = "";
+
+            sadrzajSelect.innerHTML = `<option value="">${sadrzajSelect.dataset.placeholder}</option>`;
+            dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
+
+            if (this.value && klasaMap[this.value]) {
+                const sadrzajValues = Object.keys(klasaMap[this.value]);
+                sadrzajValues.forEach(sadrzaj => {
+                    const option = new Option(sadrzaj, sadrzaj);
+                    sadrzajSelect.appendChild(option);
+                });
+            }
+
+            updateKlasaValue();
+            checkIfPredmetExists();
+        });
+    }
+
+    // Update on sadrzaj change
+    if (sadrzajSelect) {
+        sadrzajSelect.addEventListener("change", function() {
+            dosjeSelect.innerHTML = `<option value="">${dosjeSelect.dataset.placeholder}</option>`;
+            currentValues.sadrzaj = this.value || "SAD";
+            currentValues.dosje = "";
+
+            const klasa = klasaSelect.value;
+            const sadrzaj = this.value;
+            
+            if (klasa && sadrzaj && klasaMap[klasa] && klasaMap[klasa][sadrzaj]) {
+                klasaMap[klasa][sadrzaj].forEach(dosje => {
+                    const option = new Option(dosje, dosje);
+                    dosjeSelect.appendChild(option);
+                });
+            }
+            updateKlasaValue();
+            checkIfPredmetExists();
+        });
+    }
+
+    if (dosjeSelect) {
+        dosjeSelect.addEventListener("change", function() {
+            currentValues.dosje = this.value || "";
+            updateKlasaValue();
+            checkIfPredmetExists();
+        });
+    }
+
+    // Submit handler
+    otvoriPredmetBtn.addEventListener("click", function() {
+        const klasa = klasaSelect.value;
+        const sadrzaj = sadrzajSelect.value;
+        const dosje = dosjeSelect.value;
+        const zaposlenik = zaposlenikSelect.value;
+        const naziv = document.getElementById("naziv").value;
+
+        const strankaCheckbox = document.getElementById('strankaCheck');
+        const strankaField = document.getElementById('stranka');
+        const strankaError = document.getElementById('strankaError');
+
+        strankaField.classList.remove('is-invalid');
+        strankaError.style.display = 'none';
+
+        let isValid = true;
+        const missingFields = [];
+
+        if (!klasa) missingFields.push("Klasa broj");
+        if (!sadrzaj) missingFields.push("Sadržaj");
+        if (!dosje) missingFields.push("Dosje broj");
+        if (!zaposlenik) missingFields.push("Zaposlenik");
+        if (!naziv.trim()) missingFields.push("Naziv predmeta");
+
+        const strankaDateError = document.getElementById('strankaDateError');
+        if (strankaDateError) {
+            strankaDateError.style.display = 'none';
+        }
+
+        if (strankaCheckbox.checked) {
+            if (!strankaField.value) {
+                isValid = false;
+                strankaField.classList.add('is-invalid');
+                strankaError.style.display = 'block';
+                strankaField.focus();
+            }
+
+            const strankaDateValue = document.getElementById('strankaDatumValue').value;
+            if (!strankaDateValue) {
+                isValid = false;
+                if (strankaDateError) {
+                    strankaDateError.style.display = 'block';
+                }
+            }
+        }
+
+        if (missingFields.length > 0) {
+            isValid = false;
+            const errorMessage = "Molimo vas da popunite sva obavezna polja:\n\n" +
+                missingFields.map(field => `- ${field}`).join("\n");
+            alert(errorMessage);
+        }
+
+        if (!isValid) {
+            return;
+        }
+
+        // Add loading state
+        this.classList.add('seup-loading');
+        this.disabled = true;
+
+        const formData = new FormData();
+        formData.append("action", "otvori_predmet");
+        formData.append("klasa_br", klasa);
+        formData.append("sadrzaj", sadrzaj);
+        formData.append("dosje_broj", dosje);
+        formData.append("zaposlenik", zaposlenik);
+        formData.append("god", year);
+        formData.append("naziv", naziv);
+
+        if (strankaCheckbox.checked) {
+            formData.append("stranka", strankaField.value.trim());
+            const strankaDateValue = document.getElementById('strankaDatumValue').value;
+            if (strankaDateValue) {
+                formData.append("strankaDatumOtvaranja", strankaDateValue);
+            }
+        }
+
+        const datumValue = document.getElementById('datumOtvaranjaValue').value;
+        let datumOtvaranjaTimestamp = null;
+
+        if (datumValue) {
+            const now = new Date();
+            datumOtvaranjaTimestamp = `${datumValue} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        } else {
+            datumOtvaranjaTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }
   justify-content: center;
   border-radius: 50%;
   transition: all var(--transition-fast);
