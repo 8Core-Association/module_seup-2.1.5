@@ -60,6 +60,7 @@ require_once DOL_DOCUMENT_ROOT . '/ecm/class/ecmfiles.class.php';
 
 // Lokalne klase
 require_once __DIR__ . '/../class/predmet_helper.class.php';
+require_once __DIR__ . '/../class/predmet_helper_additions.class.php';
 require_once __DIR__ . '/../class/request_handler.class.php';
 
 // Postavljanje debug logova
@@ -139,6 +140,26 @@ llxHeader("", "SEUP - Predmet", '', '', 0, 0, '', '', '', 'mod-seup page-predmet
 // Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     dol_syslog('POST request', LOG_INFO);
+
+    // Handle file sync check
+    if (isset($_POST['action']) && GETPOST('action') === 'check_sync') {
+        header('Content-Type: application/json');
+        ob_end_clean();
+        
+        $result = Predmet_helper_additions::checkForNewFiles($db, $conf, $caseId);
+        echo json_encode($result);
+        exit;
+    }
+    
+    // Handle file sync
+    if (isset($_POST['action']) && GETPOST('action') === 'sync_files') {
+        header('Content-Type: application/json');
+        ob_end_clean();
+        
+        $result = Predmet_helper_additions::syncNewFiles($db, $conf, $user, $caseId);
+        echo json_encode($result);
+        exit;
+    }
 
     // Handle document upload
     if (isset($_POST['action']) && GETPOST('action') === 'upload_document') {
@@ -295,6 +316,25 @@ print '</div>';
 
 // Tab 2 - Documents
 print '<div class="seup-tab-pane" id="tab-dokumenti">';
+
+// Sync Alert (initially hidden)
+print '<div class="seup-sync-alert" id="syncAlert" style="display: none;">';
+print '<div class="seup-sync-content">';
+print '<i class="fas fa-exclamation-triangle seup-sync-icon"></i>';
+print '<div class="seup-sync-text">';
+print 'Detektirane su nove datoteke! ';
+print 'Filesystem: <span id="filesystemCount">0</span>, ';
+print 'Baza: <span id="databaseCount">0</span>';
+print '</div>';
+print '<button type="button" class="seup-btn seup-btn-warning seup-btn-sm" id="syncFilesBtn">';
+print '<i class="fas fa-sync me-2"></i>Sync Files';
+print '</button>';
+print '<button type="button" class="seup-btn seup-btn-secondary seup-btn-sm" id="checkFilesBtn">';
+print '<i class="fas fa-search me-2"></i>Provjeri nove datoteke';
+print '</button>';
+print '</div>';
+print '</div>';
+
 print '<div class="seup-documents-header">';
 print '<h4 class="seup-documents-title"><i class="fas fa-file-alt"></i>Akti i prilozi</h4>';
 print '</div>';
@@ -621,6 +661,82 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Initialize statistics
     updateStatistics();
+
+    // Auto-check for new files after 2 seconds
+    setTimeout(checkForNewFiles, 2000);
+    
+    // Manual check button
+    document.getElementById('checkFilesBtn').addEventListener('click', checkForNewFiles);
+    
+    // Sync files button
+    document.getElementById('syncFilesBtn').addEventListener('click', syncFiles);
+    
+    function checkForNewFiles() {
+        const checkBtn = document.getElementById('checkFilesBtn');
+        checkBtn.classList.add('seup-loading');
+        
+        const formData = new FormData();
+        formData.append('action', 'check_sync');
+        
+        fetch('predmet.php?id=<?php echo $caseId; ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('filesystemCount').textContent = data.filesystem_count;
+                document.getElementById('databaseCount').textContent = data.database_count;
+                
+                const syncAlert = document.getElementById('syncAlert');
+                if (data.has_new_files) {
+                    syncAlert.style.display = 'block';
+                } else {
+                    syncAlert.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Check error:', error);
+        })
+        .finally(() => {
+            checkBtn.classList.remove('seup-loading');
+        });
+    }
+    
+    function syncFiles() {
+        const syncBtn = document.getElementById('syncFilesBtn');
+        syncBtn.classList.add('seup-loading');
+        
+        const formData = new FormData();
+        formData.append('action', 'sync_files');
+        
+        fetch('predmet.php?id=<?php echo $caseId; ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                // Hide sync alert
+                document.getElementById('syncAlert').style.display = 'none';
+                // Reload page to show new files
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage('Greška pri sync: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Sync error:', error);
+            showMessage('Došlo je do greške pri sync', 'error');
+        })
+        .finally(() => {
+            syncBtn.classList.remove('seup-loading');
+        });
+    }
 
     // Add file type icons to document table
     document.querySelectorAll('.seup-documents-table tbody tr').forEach(row => {
