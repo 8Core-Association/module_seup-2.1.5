@@ -69,6 +69,7 @@ $tag_name = '';
 
 if ($action == 'addtag' && !empty($_POST['tag'])) {
     $tag_name = GETPOST('tag', 'alphanohtml');
+    $tag_color = GETPOST('tag_color', 'alpha');
 
     // Validate input
     if (dol_strlen($tag_name) < 2) {
@@ -88,10 +89,11 @@ if ($action == 'addtag' && !empty($_POST['tag'])) {
                 $error++;
                 setEventMessages($langs->trans('ErrorTagAlreadyExists'), null, 'errors');
             } else {
-                // Insert new tag
+                // Insert new tag with color
                 $sql = "INSERT INTO " . MAIN_DB_PREFIX . "a_tagovi";
-                $sql .= " (tag, entity, date_creation, fk_user_creat)";
+                $sql .= " (tag, color, entity, date_creation, fk_user_creat)";
                 $sql .= " VALUES ('" . $db->escape($tag_name) . "',";
+                $sql .= " '" . $db->escape($tag_color) . "',";
                 $sql .= " " . $conf->entity . ",";
                 $sql .= " '" . $db->idate(dol_now()) . "',";
                 $sql .= " " . $user->id . ")";
@@ -157,93 +159,361 @@ $formfile = new FormFile($db);
 // Set page title to "Tagovi"
 llxHeader("", $langs->trans("Tagovi"), '', '', 0, 0, '', '', '', 'mod-seup page-tagovi');
 
-// === BOOTSTRAP CDN ===
+// Modern design assets
 print '<meta name="viewport" content="width=device-width, initial-scale=1">';
-print '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">';
-
-// Font Awesome za ikone
+print '<link rel="preconnect" href="https://fonts.googleapis.com">';
+print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
 print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
+print '<link href="/custom/seup/css/tagovi.css" rel="stylesheet">';
 
-// Main content using HEREDOC syntax
-$htmlContent = <<<HTML
-<div class="container mt-3">
-  <div class="shadow-sm p-4 bg-body rounded">
-    <div class="text-center mb-4">
-      <h2 class="mb-2"><i class="fas fa-tags me-2"></i>{$langs->trans("Tagovi")}</h2>
-      <p class="lead mb-3">Upravljanje oznakama za dokumente i predmete</p>
-    </div>
-    
-    <form method="POST" action="" class="mt-2">
-      <input type="hidden" name="action" value="addtag">
-      <div class="mb-3">
-        <label for="tag" class="form-label">{$langs->trans('Tag')}</label>
-        <div class="input-group">
-          <input type="text" name="tag" id="tag" class="form-control" 
-                 placeholder="{$langs->trans('UnesiNoviTag')}" 
-                 value="{$tag_name}" required>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>
-            {$langs->trans('DodajTag')}
-          </button>
-        </div>
-        <div class="form-text mt-2">{$langs->trans('TagoviHelpText')}</div>
-      </div>
-    </form>
-    
-    <div class="mt-4">
-      <h4 class="mb-3">{$langs->trans('ExistingTags')}</h4>
-HTML;
+// Main hero section
+print '<main class="seup-settings-hero">';
 
-print $htmlContent;
+// Copyright footer
+print '<footer class="seup-footer">';
+print '<div class="seup-footer-content">';
+print '<div class="seup-footer-left">';
+print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '<div class="seup-footer-right">';
+print '<p class="seup-version">SEUP v.14.0.4</p>';
+print '</div>';
+print '</div>';
+print '</footer>';
 
-// Display existing tags
-$sql = "SELECT rowid, tag, date_creation";
+// Floating background elements
+print '<div class="seup-floating-elements">';
+for ($i = 1; $i <= 5; $i++) {
+    print '<div class="seup-floating-element"></div>';
+}
+print '</div>';
+
+print '<div class="seup-settings-content">';
+
+// Header section
+print '<div class="seup-settings-header">';
+print '<h1 class="seup-settings-title">Upravljanje Oznakama</h1>';
+print '<p class="seup-settings-subtitle">Kreirajte i organizirajte oznake za kategorizaciju predmeta i dokumenata</p>';
+print '</div>';
+
+// Main content container
+print '<div class="seup-tagovi-container">';
+
+// Add Tag Form
+print '<div class="seup-tag-form animate-fade-in-up">';
+print '<form method="POST" action="" id="tagForm">';
+print '<input type="hidden" name="action" value="addtag">';
+print '<div class="seup-tag-form-grid">';
+
+print '<div class="seup-tag-input-group">';
+print '<label for="tag" class="seup-label"><i class="fas fa-tag me-2"></i>' . $langs->trans('Tag') . '</label>';
+print '<input type="text" name="tag" id="tag" class="seup-tag-input" ';
+print 'placeholder="' . $langs->trans('UnesiNoviTag') . '" ';
+print 'value="' . $tag_name . '" required maxlength="50">';
+print '<div class="seup-help-text"><i class="fas fa-info-circle"></i> ' . $langs->trans('TagoviHelpText') . '</div>';
+
+// Color Picker
+print '<div class="seup-color-picker">';
+print '<div class="seup-color-picker-label"><i class="fas fa-palette me-2"></i>Odaberite boju</div>';
+print '<div class="seup-color-options">';
+
+$colors = [
+    'red' => '#ef4444',
+    'blue' => '#3b82f6', 
+    'green' => '#22c55e',
+    'purple' => '#a855f7',
+    'orange' => '#f97316',
+    'pink' => '#ec4899'
+];
+
+foreach ($colors as $colorName => $colorValue) {
+    $checked = ($colorName === 'blue') ? 'checked' : '';
+    print '<label class="seup-color-option seup-color-' . $colorName . ($checked ? ' selected' : '') . '">';
+    print '<input type="radio" name="tag_color" value="' . $colorName . '" class="seup-color-input" ' . $checked . '>';
+    print '</label>';
+}
+
+print '</div>';
+print '</div>';
+print '</div>';
+
+print '<div style="display: flex; align-items: end;">';
+print '<button type="submit" class="seup-btn seup-btn-primary" id="addTagBtn">';
+print '<i class="fas fa-plus me-2"></i>' . $langs->trans('DodajTag');
+print '</button>';
+print '</div>';
+
+print '</div>'; // seup-tag-form-grid
+print '</form>';
+print '</div>';
+
+// Tags List
+print '<div class="seup-tags-list animate-fade-in-up">';
+
+// Fetch existing tags with colors
+$sql = "SELECT rowid, tag, color, date_creation";
 $sql .= " FROM " . MAIN_DB_PREFIX . "a_tagovi";
 $sql .= " WHERE entity = " . $conf->entity;
 $sql .= " ORDER BY tag ASC";
 
 $resql = $db->query($sql);
+$tags = [];
 if ($resql) {
-    $num = $db->num_rows($resql);
-    $trans_confirm = $langs->trans('ConfirmDeleteTag');
-
-    if ($num > 0) {
-        print '<ul class="list-group">';
-        while ($obj = $db->fetch_object($resql)) {
-            print '<li class="list-group-item d-flex justify-content-between align-items-center">';
-            print '<span class="badge bg-primary rounded-pill me-2">' . $obj->tag . '</span>';
-
-            // Delete button with confirmation
-            print '<form method="POST" action="" style="display:inline;">';
-            print '<input type="hidden" name="action" value="deletetag">';
-            print '<input type="hidden" name="tagid" value="' . $obj->rowid . '">';
-            print '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'' . dol_escape_js($trans_confirm) . '\')">';
-            print '<i class="fas fa-trash"></i>';
-            print '</button>';
-            print '</form>';
-
-            print '</li>';
-        }
-        print '</ul>';
-    } else {
-        print '<div class="alert alert-info">' . $langs->trans('NoTagsAvailable') . '</div>';
+    while ($obj = $db->fetch_object($resql)) {
+        $tags[] = $obj;
     }
-} else {
-    print '<div class="alert alert-warning">' . $langs->trans('ErrorLoadingTags') . '</div>';
 }
 
-// Close HTML content
-$htmlFooter = <<<HTML
-    </div>
-  </div>
-</div>
-HTML;
+// Header with stats
+print '<div class="seup-tags-header">';
+print '<div>';
+print '<h4 class="seup-tags-title">';
+print '<i class="fas fa-tags"></i>' . $langs->trans('ExistingTags');
+print '</h4>';
+print '<div class="seup-tags-stats">';
+print '<div class="seup-stat-item">';
+print '<i class="fas fa-hashtag"></i>';
+print '<span>Ukupno: <span class="seup-stat-number">' . count($tags) . '</span></span>';
+print '</div>';
+foreach ($colors as $colorName => $colorValue) {
+    $colorCount = count(array_filter($tags, function($tag) use ($colorName) {
+        return $tag->color === $colorName;
+    }));
+    if ($colorCount > 0) {
+        print '<div class="seup-stat-item">';
+        print '<div class="seup-color-filter-btn seup-color-' . $colorName . '" style="width: 16px; height: 16px;"></div>';
+        print '<span>' . $colorCount . '</span>';
+        print '</div>';
+    }
+}
+print '</div>';
+print '</div>';
 
-print $htmlFooter;
+// Search and filter controls
+print '<div class="seup-color-filter">';
+print '<span style="font-size: var(--text-sm); color: rgba(255, 255, 255, 0.9); margin-right: var(--space-2);">Filter:</span>';
+print '<div class="seup-color-filter-btn all active" data-color="all" title="Sve boje"></div>';
+foreach ($colors as $colorName => $colorValue) {
+    print '<div class="seup-color-filter-btn seup-color-' . $colorName . '" data-color="' . $colorName . '" title="' . ucfirst($colorName) . '"></div>';
+}
+print '</div>';
+print '</div>';
 
-// Bootstrap JS
-print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>';
+// Search controls
+print '<div class="seup-tags-controls">';
+print '<div class="seup-search-container">';
+print '<div class="seup-search-input-wrapper">';
+print '<i class="fas fa-search seup-search-icon"></i>';
+print '<input type="text" id="searchInput" class="seup-search-input" placeholder="Pretraži oznake...">';
+print '</div>';
+print '</div>';
+print '</div>';
 
-// End of page
+// Tags grid
+if (count($tags) > 0) {
+    print '<div class="seup-tags-grid" id="tagsGrid">';
+    
+    foreach ($tags as $tag) {
+        $colorClass = $tag->color ?: 'blue';
+        print '<div class="seup-tag-item" data-color="' . $colorClass . '" data-tag="' . strtolower($tag->tag) . '">';
+        
+        print '<div class="seup-tag-content">';
+        print '<div class="seup-tag-color-indicator"></div>';
+        print '<span class="seup-tag-text">' . htmlspecialchars($tag->tag) . '</span>';
+        print '</div>';
+        
+        print '<div class="seup-tag-actions">';
+        print '<form method="POST" action="" style="display:inline;">';
+        print '<input type="hidden" name="action" value="deletetag">';
+        print '<input type="hidden" name="tagid" value="' . $tag->rowid . '">';
+        print '<button type="submit" class="seup-tag-delete-btn" ';
+        print 'onclick="return confirm(\'' . dol_escape_js($langs->trans('ConfirmDeleteTag')) . '\')" ';
+        print 'title="Obriši oznaku">';
+        print '<i class="fas fa-trash"></i>';
+        print '</button>';
+        print '</form>';
+        print '</div>';
+        
+        print '</div>';
+    }
+    
+    print '</div>';
+} else {
+    print '<div class="seup-tags-empty">';
+    print '<i class="fas fa-tags seup-empty-icon"></i>';
+    print '<h4 class="seup-empty-title">' . $langs->trans('NoTagsAvailable') . '</h4>';
+    print '<p class="seup-empty-description">Dodajte prvu oznaku za početak organizacije</p>';
+    print '</div>';
+}
+
+print '</div>'; // seup-tags-list
+
+print '</div>'; // seup-tagovi-container
+print '</div>'; // seup-settings-content
+print '</main>';
+
+// JavaScript for enhanced functionality
+print '<script src="/custom/seup/js/seup-modern.js"></script>';
+
+?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Color picker functionality
+    const colorOptions = document.querySelectorAll('.seup-color-option');
+    const colorInputs = document.querySelectorAll('.seup-color-input');
+
+    colorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove selected class from all options
+            colorOptions.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            this.classList.add('selected');
+            
+            // Check the corresponding radio input
+            const input = this.querySelector('.seup-color-input');
+            if (input) {
+                input.checked = true;
+            }
+        });
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const tagItems = document.querySelectorAll('.seup-tag-item');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            tagItems.forEach(item => {
+                const tagText = item.dataset.tag;
+                if (tagText.includes(searchTerm)) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Update count in header
+            const countElement = document.querySelector('.seup-stat-number');
+            if (countElement) {
+                countElement.textContent = visibleCount;
+            }
+        });
+    }
+
+    // Color filter functionality
+    const colorFilterBtns = document.querySelectorAll('.seup-color-filter-btn');
+    
+    colorFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filterColor = this.dataset.color;
+            
+            // Remove active class from all filter buttons
+            colorFilterBtns.forEach(b => b.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Filter tags
+            let visibleCount = 0;
+            tagItems.forEach(item => {
+                const itemColor = item.dataset.color;
+                
+                if (filterColor === 'all' || itemColor === filterColor) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Update count
+            const countElement = document.querySelector('.seup-stat-number');
+            if (countElement) {
+                countElement.textContent = visibleCount;
+            }
+        });
+    });
+
+    // Form submission with loading state
+    const tagForm = document.getElementById('tagForm');
+    const addTagBtn = document.getElementById('addTagBtn');
+    const tagInput = document.getElementById('tag');
+
+    if (tagForm && addTagBtn) {
+        tagForm.addEventListener('submit', function(e) {
+            const tagValue = tagInput.value.trim();
+            
+            if (tagValue.length < 2) {
+                e.preventDefault();
+                tagInput.classList.add('error');
+                showMessage('Oznaka mora imati najmanje 2 znaka', 'error');
+                return;
+            }
+
+            // Add loading state
+            addTagBtn.classList.add('seup-loading');
+            tagInput.classList.remove('error');
+            tagInput.classList.add('success');
+        });
+    }
+
+    // Input validation
+    if (tagInput) {
+        tagInput.addEventListener('input', function() {
+            this.classList.remove('error', 'success');
+            
+            if (this.value.length >= 2) {
+                this.classList.add('success');
+            }
+        });
+    }
+
+    // Delete button loading states
+    document.querySelectorAll('.seup-tag-delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('<?php echo dol_escape_js($langs->trans('ConfirmDeleteTag')); ?>')) {
+                this.classList.add('seup-loading');
+            }
+        });
+    });
+
+    // Toast message function
+    window.showMessage = function(message, type = 'success', duration = 5000) {
+        let messageEl = document.querySelector('.seup-message-toast');
+        if (!messageEl) {
+            messageEl = document.createElement('div');
+            messageEl.className = 'seup-message-toast';
+            document.body.appendChild(messageEl);
+        }
+
+        messageEl.className = `seup-message-toast seup-message-${type} show`;
+        messageEl.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+        `;
+
+        setTimeout(() => {
+            messageEl.classList.remove('show');
+        }, duration);
+    };
+
+    // Add staggered animation to existing tags
+    tagItems.forEach((item, index) => {
+        item.style.animationDelay = `${index * 100}ms`;
+        item.classList.add('new-tag');
+    });
+});
+</script>
+
+<?php
 llxFooter();
 $db->close();
+?>
