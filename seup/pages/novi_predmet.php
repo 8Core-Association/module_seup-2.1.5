@@ -232,14 +232,14 @@ print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-for
 print '<div class="seup-form-grid">';
 
 print '<div class="seup-form-group">';
-print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group"></i> Klasa broj</label>';
+print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group me-2"></i>Klasa broj</label>';
 print '<select name="klasa_br" id="klasa_br" class="seup-select" required>';
 print $klasaOptions;
 print '</select>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list"></i> Sadržaj</label>';
+print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list me-2"></i>Sadržaj</label>';
 print '<select name="sadrzaj" id="sadrzaj" class="seup-select" required>';
 print '<option value="">' . $langs->trans("Odaberi Sadrzaj") . '</option>';
 print '</select>';
@@ -250,14 +250,14 @@ print '</div>'; // seup-form-grid
 print '<div class="seup-form-grid">';
 
 print '<div class="seup-form-group">';
-print '<label for="dosjeBroj" class="seup-label"><i class="fas fa-folder"></i> Dosje broj</label>';
+print '<label for="dosjeBroj" class="seup-label"><i class="fas fa-folder me-2"></i>Dosje broj</label>';
 print '<select name="dosjeBroj" id="dosjeBroj" class="seup-select" required>';
 print '<option value="">' . $langs->trans("Odaberi Dosje Broj") . '</option>';
 print '</select>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="zaposlenik" class="seup-label"><i class="fas fa-user"></i> Zaposlenik</label>';
+print '<label for="zaposlenik" class="seup-label"><i class="fas fa-user me-2"></i>Zaposlenik</label>';
 print '<select class="seup-select" id="zaposlenik" name="zaposlenik" required>';
 print $zaposlenikOptions;
 print '</select>';
@@ -266,7 +266,7 @@ print '</div>';
 print '</div>'; // seup-form-grid
 
 print '<div class="seup-form-group">';
-print '<label for="stranka" class="seup-label"><i class="fas fa-building"></i> Stranka</label>';
+print '<label for="stranka" class="seup-label"><i class="fas fa-building me-2"></i>Stranka</label>';
 print '<div class="seup-stranka-container">';
 print '<select class="seup-select" id="stranka" name="stranka" disabled style="flex: 1;"></select>';
 print '<div class="seup-checkbox-container">';
@@ -299,13 +299,13 @@ print '</div>';
 print '<div class="seup-form">';
 
 print '<div class="seup-form-group">';
-print '<label for="naziv" class="seup-label"><i class="fas fa-heading"></i> Naziv predmeta</label>';
+print '<label for="naziv" class="seup-label"><i class="fas fa-heading me-2"></i>Naziv predmeta</label>';
 print '<textarea class="seup-textarea" id="naziv" name="naziv" rows="4" maxlength="500" placeholder="Unesite naziv predmeta (maksimalno 500 znakova)"></textarea>';
 print '<div class="seup-char-counter" id="charCounter">0 / 500</div>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="datumOtvaranja" class="seup-label"><i class="fas fa-calendar"></i> Datum otvaranja predmeta</label>';
+print '<label for="datumOtvaranja" class="seup-label"><i class="fas fa-calendar me-2"></i>Datum otvaranja predmeta</label>';
 print '<button type="button" class="seup-date-btn" id="datumOtvaranjaBtn">';
 print '<i class="fas fa-calendar"></i> Odaberi datum';
 print '</button>';
@@ -314,7 +314,7 @@ print '<div class="seup-help-text"><i class="fas fa-info-circle"></i> Ostavite p
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label class="seup-label"><i class="fas fa-tags"></i> Oznake</label>';
+print '<label class="seup-label"><i class="fas fa-tags me-2"></i>Oznake</label>';
 print '<button type="button" class="seup-tags-btn" id="tagsBtn">';
 print '<i class="fas fa-tags"></i> Odaberi oznake';
 print '</button>';
