@@ -49,6 +49,7 @@ if (!$res && file_exists("../../../main.inc.php")) {
 if (!$res) {
     die("Include of main fails");
 }
+
 // Libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
@@ -71,6 +72,7 @@ $langs->loadLangs(array("seup@seup"));
 $action = GETPOST('action', 'aZ09');
 $now = dol_now();
 $max = getDolGlobalInt('MAIN_SIZE_SHORTLIST_LIMIT', 5);
+
 // Sigurnosna provjera
 $socid = GETPOST('socid', 'int');
 if (isset($user->socid) && $user->socid > 0) {
@@ -78,9 +80,7 @@ if (isset($user->socid) && $user->socid > 0) {
     $socid = $user->socid;
 }
 
-
 // Hvatanje ID predmeta iz GET zahtjeva
-// Ako je ID predmeta postavljen, dohvatit ćemo detalje predmeta
 $caseId = GETPOST('id', 'int');
 dol_syslog("Dohvaćanje ID predmeta: $caseId", LOG_DEBUG);
 if (empty($caseId)) {
@@ -121,7 +121,6 @@ if ($caseId) {
     }
 }
 
-
 // definiranje direktorija za privremene datoteke
 define('TEMP_DIR_RELATIVE', '/temp/');
 define('TEMP_DIR_FULL', DOL_DATA_ROOT . TEMP_DIR_RELATIVE);
@@ -135,7 +134,7 @@ if (!file_exists(TEMP_DIR_FULL)) {
 $form = new Form($db);
 $formfile = new FormFile($db);
 
-llxHeader("", "", '', '', 0, 0, '', '', '', 'mod-seup page-index');
+llxHeader("", "SEUP - Predmet", '', '', 0, 0, '', '', '', 'mod-seup page-predmet');
 
 // Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -168,253 +167,486 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $documentTableHTML = '';
 Predmet_helper::fetchUploadedDocuments($db, $conf, $documentTableHTML, $langs, $caseId);
 
-// === BOOTSTRAP CDN ===
+// Modern design assets
 print '<meta name="viewport" content="width=device-width, initial-scale=1">';
-print '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">';
+print '<link rel="preconnect" href="https://fonts.googleapis.com">';
+print '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+print '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
 print '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
-print '<link href="/custom/seup/css/style.css" rel="stylesheet">';
+print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
+print '<link href="/custom/seup/css/predmet.css" rel="stylesheet">';
 
-print '<div class="container mt-5 shadow-sm p-3 mb-5 bg-body rounded">';
+// Main hero section
+print '<main class="seup-settings-hero">';
 
-// Tabovi
-print '
-<ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1" type="button" role="tab" aria-controls="tab1" aria-selected="true">
-      <i class="fas fa-home me-2"></i>Predmet
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2" type="button" role="tab" aria-controls="tab2" aria-selected="false">
-      <i class="fas fa-file-alt me-2"></i>Dokumenti u prilozima
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3" type="button" role="tab" aria-controls="tab3" aria-selected="false">
-      <i class="fas fa-search"></i>Predpregled
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="tab4-tab" data-bs-toggle="tab" data-bs-target="#tab4" type="button" role="tab" aria-controls="tab4" aria-selected="false">
-      <i class="fas fa-chart-bar me-2"></i>Šta god
-    </button>
-  </li>
-</ul>
+// Copyright footer
+print '<footer class="seup-footer">';
+print '<div class="seup-footer-content">';
+print '<div class="seup-footer-left">';
+print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '<div class="seup-footer-right">';
+print '<p class="seup-version">SEUP v.14.0.4</p>';
+print '</div>';
+print '</div>';
+print '</footer>';
 
-<div class="tab-content" id="myTabContent">';
-
-// Tab 1 - Case Details or Welcome
-print '<div class="tab-pane fade show active" id="tab1" role="tabpanel" aria-labelledby="tab1-tab">';
-if ($caseDetails) {
-    print '
-    <div class="p-3 border rounded">
-        <h4 class="mb-4">Detalji predmeta #' . $caseDetails->ID_predmeta . '</h4>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label class="fw-bold">Klasa:</label>
-                    <div class="badge bg-primary fs-6">' . $caseDetails->klasa . '</div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold">Naziv predmeta:</label>
-                    <p>' . $caseDetails->naziv_predmeta . '</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold">Ustanova:</label>
-                    <p>' . $caseDetails->name_ustanova . '</p>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label class="fw-bold">Zaposlenik:</label>
-                    <p>' . $caseDetails->ime_prezime . '</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold">Datum otvaranja:</label>
-                    <p>' . $caseDetails->datum_otvaranja . '</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold">Status:</label>
-                    <span class="badge bg-success">Aktivan</span>
-                </div>
-            </div>
-        </div>
-    </div>';
-} else {
-    print '
-    <div class="p-3 border rounded">
-        <div class="text-center py-5">
-            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-            <h4 class="mb-3">Dobrodošli</h4>
-            <p class="text-muted">Ovo je početna stranica. Za pregled predmeta posjetite stranicu Predmeti.</p>
-            <a href="predmeti.php" class="btn btn-primary mt-2">
-                <i class="fas fa-external-link-alt me-1"></i> Otvori Predmete
-            </a>
-        </div>
-    </div>';
+// Floating background elements
+print '<div class="seup-floating-elements">';
+for ($i = 1; $i <= 5; $i++) {
+    print '<div class="seup-floating-element"></div>';
 }
-print '</div>
+print '</div>';
 
-  <!-- Tab 2 - Documents -->
-  <div class="tab-pane fade" id="tab2" role="tabpanel" aria-labelledby="tab2-tab">
-  <div class="p-3 border rounded">
-    <h4 class="mb-3">Akti i prilozi</h4>
-    <p>Pregled dodanih priloga sa datumom kreiranja i kreatorom</p>
-    ' . $documentTableHTML . '
-    <div class="mt-3 d-flex gap-2">
-      <!-- Add these 2 lines -->
-      <button type="button" id="uploadTrigger" class="btn btn-primary btn-sm">
-        <i class="fas fa-upload me-1"></i> Dodaj dokument
-      </button>
-      <input type="file" id="documentInput" style="display: none;">
-      
-      <!-- Keep your other buttons -->
-      <button type="button" class="btn btn-secondary btn-sm">Dugme 2</button>
-      <button type="button" class="btn btn-success btn-sm">Dugme 3</button>
-    </div>
-  </div>
-</div>
+print '<div class="seup-settings-content">';
 
-  <!-- Tab 3 - Preview -->
-  <div class="tab-pane fade" id="tab3" role="tabpanel" aria-labelledby="tab3-tab">
-    <div class="p-3 border rounded">
-      <h4 class="mb-3">Predpregled omota sposa sa listom priloga</h4>
-      <p>Bumo vidli kako</p>
-      <div class="mt-3 d-flex gap-2">
-        <button type="button" class="btn btn-primary btn-sm" data-action="generate_pdf">Kreiraj PDF</button>
-        <button type="button" class="btn btn-secondary btn-sm">Dugme 2</button>
-        <button type="button" class="btn btn-success btn-sm">Dugme 3</button>
-      </div>
-    </div>
-  </div>
+// Header section
+if ($caseDetails) {
+    print '<div class="seup-settings-header">';
+    print '<h1 class="seup-settings-title">Predmet #' . $caseDetails->ID_predmeta . '</h1>';
+    print '<p class="seup-settings-subtitle">' . htmlspecialchars($caseDetails->naziv_predmeta) . '</p>';
+    print '</div>';
+} else {
+    print '<div class="seup-settings-header">';
+    print '<h1 class="seup-settings-title">Predmet</h1>';
+    print '<p class="seup-settings-subtitle">Upravljanje predmetom i povezanim dokumentima</p>';
+    print '</div>';
+}
 
-  <!-- Tab 4 - Stats -->
-  <div class="tab-pane fade" id="tab4" role="tabpanel" aria-labelledby="tab4-tab">
-    <div class="p-3 border rounded">
-      <h4 class="mb-3">Statistički podaci</h4>
-      <p>Možda evidencije logiranja i provedenog vremena</p>
-      <div class="mt-3 d-flex gap-2">
-        <button type="button" class="btn btn-primary btn-sm">Dugme 1</button>
-        <button type="button" class="btn btn-secondary btn-sm">Dugme 2</button>
-        <button type="button" class="btn btn-success btn-sm">Dugme 3</button>
-      </div>
-    </div>
-  </div>
-</div>
-</div>';
+// Main content container
+print '<div class="seup-predmet-container">';
 
-// Bootstrap JS
-print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>';
+// Tab Navigation
+print '<div class="seup-tabs">';
+print '<button class="seup-tab active" data-tab="predmet">';
+print '<i class="fas fa-folder-open"></i>Predmet';
+print '</button>';
+print '<button class="seup-tab" data-tab="dokumenti">';
+print '<i class="fas fa-file-alt"></i>Dokumenti u prilozima';
+print '</button>';
+print '<button class="seup-tab" data-tab="predpregled">';
+print '<i class="fas fa-search"></i>Predpregled';
+print '</button>';
+print '<button class="seup-tab" data-tab="statistike">';
+print '<i class="fas fa-chart-bar"></i>Statistike';
+print '</button>';
+print '</div>';
+
+// Tab Content
+print '<div class="seup-tab-content">';
+
+// Tab 1 - Predmet Details
+print '<div class="seup-tab-pane active" id="tab-predmet">';
+if ($caseDetails) {
+    print '<div class="seup-case-details">';
+    print '<div class="seup-case-header">';
+    print '<div class="seup-case-icon"><i class="fas fa-folder-open"></i></div>';
+    print '<div class="seup-case-title">';
+    print '<h4>Detalji predmeta</h4>';
+    print '<div class="seup-case-klasa">' . htmlspecialchars($caseDetails->klasa) . '</div>';
+    print '</div>';
+    print '<div class="seup-status-badge seup-status-active">';
+    print '<i class="fas fa-check-circle me-1"></i>Aktivan';
+    print '</div>';
+    print '</div>';
+    
+    print '<div class="seup-case-grid">';
+    
+    print '<div class="seup-case-field">';
+    print '<div class="seup-case-field-label"><i class="fas fa-heading"></i>Naziv predmeta</div>';
+    print '<div class="seup-case-field-value">' . htmlspecialchars($caseDetails->naziv_predmeta) . '</div>';
+    print '</div>';
+    
+    print '<div class="seup-case-field">';
+    print '<div class="seup-case-field-label"><i class="fas fa-building"></i>Ustanova</div>';
+    print '<div class="seup-case-field-value">' . htmlspecialchars($caseDetails->name_ustanova ?: 'N/A') . '</div>';
+    print '</div>';
+    
+    print '<div class="seup-case-field">';
+    print '<div class="seup-case-field-label"><i class="fas fa-user"></i>Zaposlenik</div>';
+    print '<div class="seup-case-field-value">' . htmlspecialchars($caseDetails->ime_prezime ?: 'N/A') . '</div>';
+    print '</div>';
+    
+    print '<div class="seup-case-field">';
+    print '<div class="seup-case-field-label"><i class="fas fa-calendar"></i>Datum otvaranja</div>';
+    print '<div class="seup-case-field-value">' . htmlspecialchars($caseDetails->datum_otvaranja) . '</div>';
+    print '</div>';
+    
+    if ($caseDetails->opis_klasifikacijske_oznake) {
+        print '<div class="seup-case-field" style="grid-column: 1 / -1;">';
+        print '<div class="seup-case-field-label"><i class="fas fa-info-circle"></i>Opis klasifikacije</div>';
+        print '<div class="seup-case-field-value">' . htmlspecialchars($caseDetails->opis_klasifikacijske_oznake) . '</div>';
+        print '</div>';
+    }
+    
+    print '</div>'; // seup-case-grid
+    print '</div>'; // seup-case-details
+} else {
+    print '<div class="seup-welcome-state">';
+    print '<i class="fas fa-folder-open seup-welcome-icon"></i>';
+    print '<h4 class="seup-welcome-title">Dobrodošli</h4>';
+    print '<p class="seup-welcome-description">Ovo je početna stranica. Za pregled predmeta posjetite stranicu Predmeti.</p>';
+    print '<a href="predmeti.php" class="seup-btn seup-btn-primary">';
+    print '<i class="fas fa-external-link-alt me-2"></i>Otvori Predmete';
+    print '</a>';
+    print '</div>';
+}
+print '</div>';
+
+// Tab 2 - Documents
+print '<div class="seup-tab-pane" id="tab-dokumenti">';
+print '<div class="seup-documents-header">';
+print '<h4 class="seup-documents-title"><i class="fas fa-file-alt"></i>Akti i prilozi</h4>';
+print '</div>';
+
+// Upload section
+print '<div class="seup-upload-section">';
+print '<div class="seup-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>';
+print '<div class="seup-upload-text">Kliknite za dodavanje novog dokumenta</div>';
+print '<button type="button" id="uploadTrigger" class="seup-btn seup-btn-primary">';
+print '<i class="fas fa-upload me-2"></i>Dodaj dokument';
+print '</button>';
+print '<input type="file" id="documentInput" style="display: none;">';
+print '<div class="seup-upload-progress" id="uploadProgress">';
+print '<div class="seup-progress-bar">';
+print '<div class="seup-progress-fill" id="progressFill"></div>';
+print '</div>';
+print '<div class="seup-progress-text" id="progressText">Uploading...</div>';
+print '</div>';
+print '</div>';
+
+// Documents display
+if (strpos($documentTableHTML, 'NoDocumentsFound') !== false || strpos($documentTableHTML, 'alert-info') !== false) {
+    print '<div class="seup-no-documents">';
+    print '<i class="fas fa-file-alt seup-no-documents-icon"></i>';
+    print '<h5 class="seup-no-documents-title">Nema uploadanih dokumenata</h5>';
+    print '<p class="seup-no-documents-description">Dodajte prvi dokument za ovaj predmet</p>';
+    print '</div>';
+} else {
+    // Convert the existing table HTML to modern design
+    $modernTableHTML = str_replace(
+        ['table table-sm table-bordered', 'btn btn-outline-primary btn-sm'],
+        ['seup-documents-table', 'seup-btn-download'],
+        $documentTableHTML
+    );
+    print $modernTableHTML;
+}
+
+print '<div class="seup-action-buttons">';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-search me-2"></i>Pretraži dokumente';
+print '</button>';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-sort me-2"></i>Sortiraj';
+print '</button>';
+print '</div>';
+print '</div>';
+
+// Tab 3 - Preview
+print '<div class="seup-tab-pane" id="tab-predpregled">';
+print '<div class="seup-preview-container">';
+print '<i class="fas fa-file-pdf seup-preview-icon"></i>';
+print '<h4 class="seup-preview-title">Predpregled omota spisa</h4>';
+print '<p class="seup-preview-description">Generirajte PDF pregled s listom svih priloga</p>';
+print '<div class="seup-action-buttons">';
+print '<button type="button" class="seup-btn seup-btn-primary" data-action="generate_pdf">';
+print '<i class="fas fa-file-pdf me-2"></i>Kreiraj PDF';
+print '</button>';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-print me-2"></i>Ispis';
+print '</button>';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-share me-2"></i>Dijeli';
+print '</button>';
+print '</div>';
+print '</div>';
+print '</div>';
+
+// Tab 4 - Statistics
+print '<div class="seup-tab-pane" id="tab-statistike">';
+print '<div class="seup-stats-container">';
+print '<h4 class="seup-documents-title"><i class="fas fa-chart-bar"></i>Statistički podaci</h4>';
+print '<div class="seup-stats-grid">';
+
+print '<div class="seup-stat-card">';
+print '<i class="fas fa-file-alt seup-stat-icon"></i>';
+print '<div class="seup-stat-number" id="stat-documents">0</div>';
+print '<div class="seup-stat-label">Dokumenata</div>';
+print '</div>';
+
+print '<div class="seup-stat-card">';
+print '<i class="fas fa-clock seup-stat-icon"></i>';
+print '<div class="seup-stat-number" id="stat-days">0</div>';
+print '<div class="seup-stat-label">Dana otvoreno</div>';
+print '</div>';
+
+print '<div class="seup-stat-card">';
+print '<i class="fas fa-user seup-stat-icon"></i>';
+print '<div class="seup-stat-number">1</div>';
+print '<div class="seup-stat-label">Zaposlenik</div>';
+print '</div>';
+
+print '<div class="seup-stat-card">';
+print '<i class="fas fa-eye seup-stat-icon"></i>';
+print '<div class="seup-stat-number" id="stat-views">0</div>';
+print '<div class="seup-stat-label">Pregleda</div>';
+print '</div>';
+
+print '</div>'; // seup-stats-grid
+
+print '<div class="seup-action-buttons">';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-download me-2"></i>Izvoz statistika';
+print '</button>';
+print '<button type="button" class="seup-btn seup-btn-secondary">';
+print '<i class="fas fa-chart-line me-2"></i>Detaljni izvještaj';
+print '</button>';
+print '</div>';
+print '</div>';
+print '</div>';
+
+print '</div>'; // seup-tab-content
+print '</div>'; // seup-predmet-container
+
+print '</div>'; // seup-settings-content
+print '</main>';
+
+// JavaScript for enhanced functionality
+print '<script src="/custom/seup/js/seup-modern.js"></script>';
 
 ?>
 
 <input type="hidden" name="token" value="<?php echo newToken(); ?>">
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Get elements safely
-        const uploadTrigger = document.getElementById("uploadTrigger");
-        const documentInput = document.getElementById("documentInput");
-        const pdfButton = document.querySelector("[data-action='generate_pdf']");
+document.addEventListener("DOMContentLoaded", function() {
+    // Tab functionality
+    const tabs = document.querySelectorAll('.seup-tab');
+    const tabPanes = document.querySelectorAll('.seup-tab-pane');
 
-        // Only add event listeners if elements exist
-        if (uploadTrigger && documentInput) {
-            // Upload trigger
-            uploadTrigger.addEventListener("click", function() {
-                documentInput.click();
-            });
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Remove active class from all tabs and panes
+            tabs.forEach(t => t.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding pane
+            this.classList.add('active');
+            const targetPane = document.getElementById(`tab-${targetTab}`);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+        });
+    });
 
-            // File selection handler
-            documentInput.addEventListener("change", function(e) {
-                const allowedTypes = [
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/msword",
-                    "application/vnd.ms-excel",
-                    "application/octet-stream",
-                    "application/zip",
-                    "application/pdf",
-                    "image/jpeg",
-                    "image/png"
-                ];
+    // Get elements safely
+    const uploadTrigger = document.getElementById("uploadTrigger");
+    const documentInput = document.getElementById("documentInput");
+    const pdfButton = document.querySelector("[data-action='generate_pdf']");
+    const uploadProgress = document.getElementById("uploadProgress");
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
 
-                const allowedExtensions = [
-                    ".docx", ".xlsx", ".doc", ".xls",
-                    ".pdf", ".jpg", ".jpeg", ".png", ".zip"
-                ];
+    // Upload functionality
+    if (uploadTrigger && documentInput) {
+        uploadTrigger.addEventListener("click", function() {
+            documentInput.click();
+        });
 
-                if (this.files.length > 0) {
-                    const file = this.files[0];
-                    const extension = "." + file.name.split(".").pop().toLowerCase();
+        documentInput.addEventListener("change", function(e) {
+            const allowedTypes = [
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword",
+                "application/vnd.ms-excel",
+                "application/octet-stream",
+                "application/zip",
+                "application/pdf",
+                "image/jpeg",
+                "image/png"
+            ];
 
-                    const formData = new FormData();
-                    formData.append("document", file);
-                    formData.append("token", document.querySelector("input[name='token']").value);
-                    formData.append("action", "upload_document");
-                    formData.append("case_id", <?php echo $caseId; ?>);
+            const allowedExtensions = [
+                ".docx", ".xlsx", ".doc", ".xls",
+                ".pdf", ".jpg", ".jpeg", ".png", ".zip"
+            ];
 
-                    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
-                        alert("<?php echo $langs->transnoentities('ErrorInvalidFileTypeJS'); ?>\nAllowed formats: " + allowedExtensions.join(", "));
-                        this.value = "";
-                        return;
-                    }
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const extension = "." + file.name.split(".").pop().toLowerCase();
 
-                    if (file.size > 10 * 1024 * 1024) {
-                        alert("<?php echo $langs->transnoentities('ErrorFileTooLarge'); ?>");
-                        this.value = "";
-                        return;
-                    }
-
-                    fetch("", {
-                        method: "POST",
-                        body: formData
-                    }).then(response => {
-                        if (response.ok) {
-                            document.getElementById("documentInput").value = "";
-                            window.location.reload();
-                        }
-                    }).catch(error => {
-                        console.error("Upload error:", error);
-                    });
+                if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension)) {
+                    showMessage("<?php echo $langs->transnoentities('ErrorInvalidFileTypeJS'); ?>\nAllowed formats: " + allowedExtensions.join(", "), 'error');
+                    this.value = "";
+                    return;
                 }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage("<?php echo $langs->transnoentities('ErrorFileTooLarge'); ?>", 'error');
+                    this.value = "";
+                    return;
+                }
+
+                // Show upload progress
+                uploadProgress.style.display = 'block';
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Priprema upload...';
+
+                const formData = new FormData();
+                formData.append("document", file);
+                formData.append("token", document.querySelector("input[name='token']").value);
+                formData.append("action", "upload_document");
+                formData.append("case_id", <?php echo $caseId; ?>);
+
+                // Simulate progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `Uploading... ${Math.round(progress)}%`;
+                }, 100);
+
+                fetch("", {
+                    method: "POST",
+                    body: formData
+                }).then(response => {
+                    clearInterval(progressInterval);
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Upload završen!';
+                    
+                    if (response.ok) {
+                        setTimeout(() => {
+                            uploadProgress.style.display = 'none';
+                            document.getElementById("documentInput").value = "";
+                            showMessage('Dokument je uspješno uploadovan!', 'success');
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        throw new Error('Upload failed');
+                    }
+                }).catch(error => {
+                    clearInterval(progressInterval);
+                    uploadProgress.style.display = 'none';
+                    console.error("Upload error:", error);
+                    showMessage('Greška pri uploadu dokumenta', 'error');
+                });
+            }
+        });
+    }
+
+    // PDF generation
+    if (pdfButton) {
+        pdfButton.addEventListener("click", function() {
+            this.classList.add('seup-loading');
+            
+            const generatePdfUrl = "<?php echo DOL_URL_ROOT . '/custom/seup/class/generate_pdf.php'; ?>";
+            fetch(generatePdfUrl, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.file) {
+                    window.open(data.file, "_blank");
+                    showMessage('PDF je uspješno generiran!', 'success');
+                } else {
+                    throw new Error(data.error || "PDF generation failed.");
+                }
+            })
+            .catch(error => {
+                console.error("PDF generation error:", error);
+                showMessage("PDF generation failed: " + error.message, 'error');
+            })
+            .finally(() => {
+                this.classList.remove('seup-loading');
             });
-        } else {
-            console.warn("Upload elements not found");
+        });
+    }
+
+    // Calculate and display statistics
+    function updateStatistics() {
+        // Count documents from table
+        const documentRows = document.querySelectorAll('.seup-documents-table tbody tr');
+        const docCount = documentRows.length;
+        document.getElementById('stat-documents').textContent = docCount;
+
+        // Calculate days open (if case details exist)
+        <?php if ($caseDetails): ?>
+        const openDate = new Date('<?php echo date('Y-m-d', strtotime(str_replace('.', '-', $caseDetails->datum_otvaranja))); ?>');
+        const today = new Date();
+        const diffTime = Math.abs(today - openDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('stat-days').textContent = diffDays;
+        <?php endif; ?>
+
+        // Simulate views (you can implement real tracking)
+        const views = Math.floor(Math.random() * 50) + 1;
+        document.getElementById('stat-views').textContent = views;
+    }
+
+    // Toast message function
+    window.showMessage = function(message, type = 'success', duration = 5000) {
+        let messageEl = document.querySelector('.seup-message-toast');
+        if (!messageEl) {
+            messageEl = document.createElement('div');
+            messageEl.className = 'seup-message-toast';
+            document.body.appendChild(messageEl);
         }
 
-        // PDF generation
-        if (pdfButton) {
-            pdfButton.addEventListener("click", function() {
-                const generatePdfUrl = "<?php echo DOL_URL_ROOT . '/custom/seup/class/generate_pdf.php'; ?>";
-                fetch(generatePdfUrl, {
-                        method: "POST"
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.file) {
-                            window.open(data.file, "_blank");
-                        } else {
-                            throw new Error(data.error || "PDF generation failed.");
-                        }
-                    })
-                    .catch(error => {
-                        console.error("PDF generation error:", error);
-                        alert("PDF generation failed: " + error.message);
-                    });
-            });
-        } else {
-            console.warn("PDF button not found");
+        messageEl.className = `seup-message-toast seup-message-${type} show`;
+        messageEl.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+        `;
+
+        setTimeout(() => {
+            messageEl.classList.remove('show');
+        }, duration);
+    };
+
+    // Initialize statistics
+    updateStatistics();
+
+    // Add file type icons to document table
+    document.querySelectorAll('.seup-documents-table tbody tr').forEach(row => {
+        const nameCell = row.querySelector('td:first-child');
+        if (nameCell) {
+            const filename = nameCell.textContent.trim();
+            const extension = filename.split('.').pop().toLowerCase();
+            
+            let iconClass = 'default';
+            let iconName = 'fa-file';
+            
+            if (['pdf'].includes(extension)) {
+                iconClass = 'pdf';
+                iconName = 'fa-file-pdf';
+            } else if (['doc', 'docx'].includes(extension)) {
+                iconClass = 'doc';
+                iconName = 'fa-file-word';
+            } else if (['xls', 'xlsx'].includes(extension)) {
+                iconClass = 'xls';
+                iconName = 'fa-file-excel';
+            } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
+                iconClass = 'img';
+                iconName = 'fa-file-image';
+            }
+            
+            nameCell.innerHTML = `
+                <div class="seup-file-icon ${iconClass}">
+                    <i class="fas ${iconName}"></i>
+                </div>
+                <span class="seup-document-name">${filename}</span>
+            `;
+            nameCell.style.display = 'flex';
+            nameCell.style.alignItems = 'center';
         }
     });
+});
 </script>
 
 <?php
-
 llxFooter();
 $db->close();
+?>
