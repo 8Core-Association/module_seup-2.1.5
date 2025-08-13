@@ -1097,6 +1097,17 @@ document.addEventListener("DOMContentLoaded", function() {
     transform: scale(1) translateY(0);
   }
 }
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+}
 </style>
 
 <?php
