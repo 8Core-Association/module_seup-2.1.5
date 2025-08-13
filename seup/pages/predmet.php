@@ -161,6 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
     exit;
 }
 
+// Handle POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    dol_syslog('POST request', LOG_INFO);
+
     // Handle file sync
     if (isset($_POST['action']) && $_POST['action'] === 'sync_files') {
         header('Content-Type: application/json');
@@ -171,8 +175,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
         exit;
     }
 
-    // Handle file stats check
-    if (isset($_GET['action']) && $_GET['action'] === 'check_file_stats') {
+    // Handle document upload
+    if (isset($_POST['action']) && GETPOST('action') === 'upload_document') {
+        Request_Handler::handleUploadDocument($db, $upload_dir, $langs, $conf, $user);
+        exit;
+    }
+}
+
+// Handle GET requests for file stats
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
+    if ($_GET['action'] === 'check_file_stats') {
         header('Content-Type: application/json');
         ob_end_clean();
         
@@ -181,14 +193,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['act
         exit;
     }
 
-    // Handle document upload
-    if (isset($_POST['action']) && GETPOST('action') === 'upload_document') {
-        Request_Handler::handleUploadDocument($db, $upload_dir, $langs, $conf, $user);
-        exit;
-    }
-
     // File existence check
-    if ($_SERVER['REQUEST_METHOD'] === 'GET' && GETPOST('action') === 'check_file_exists') {
+    if ($_GET['action'] === 'check_file_exists') {
         ob_end_clean();
         $file_path = GETPOST('file', 'alphanohtml');
         if (strpos($file_path, TEMP_DIR_RELATIVE) !== 0) {
