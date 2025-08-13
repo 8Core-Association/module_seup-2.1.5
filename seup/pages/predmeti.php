@@ -53,6 +53,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 
 // Local classes
 require_once __DIR__ . '/../class/predmet_helper.class.php';
+require_once __DIR__ . '/../class/request_handler.class.php';
 
 // Ensure database tables exist (including a_arhiva)
 Predmet_helper::createSeupDatabaseTables($db);
@@ -77,6 +78,28 @@ if (!in_array($sortField, $allowedSortFields)) {
     $sortField = 'ID_predmeta';
 }
 $sortOrder = ($sortOrder === 'ASC') ? 'ASC' : 'DESC';
+
+// Handle POST requests for archiving
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = GETPOST('action', 'alpha');
+    
+    if ($action === 'archive_predmet') {
+        header('Content-Type: application/json');
+        ob_end_clean();
+        
+        $predmet_id = GETPOST('predmet_id', 'int');
+        $razlog = GETPOST('razlog', 'alphanohtml');
+        
+        if (!$predmet_id) {
+            echo json_encode(['success' => false, 'error' => 'Missing predmet ID']);
+            exit;
+        }
+        
+        $result = Predmet_helper::archivePredmet($db, $conf, $user, $predmet_id, $razlog);
+        echo json_encode($result);
+        exit;
+    }
+}
 
 // Use helper to build ORDER BY
 $orderByClause = Predmet_helper::buildOrderByKlasa($sortField, $sortOrder);
@@ -340,6 +363,36 @@ print '</div>'; // seup-predmeti-container
 print '</div>'; // seup-settings-content
 print '</main>';
 
+// Archive Modal
+print '<div class="seup-modal" id="archiveModal">';
+print '<div class="seup-modal-content">';
+print '<div class="seup-modal-header">';
+print '<h5 class="seup-modal-title"><i class="fas fa-archive me-2"></i>Arhiviranje Predmeta</h5>';
+print '<button type="button" class="seup-modal-close" id="closeArchiveModal">&times;</button>';
+print '</div>';
+print '<div class="seup-modal-body">';
+print '<div class="seup-archive-info">';
+print '<div class="seup-archive-klasa" id="archiveKlasa">001-01/25-01/1</div>';
+print '<div class="seup-archive-naziv" id="archiveNaziv">Naziv predmeta</div>';
+print '<div class="seup-archive-warning">';
+print '<i class="fas fa-exclamation-triangle me-2"></i>';
+print 'Predmet će biti premješten u arhivu. Svi dokumenti će biti premješteni u arhivsku mapu.';
+print '</div>';
+print '</div>';
+print '<div class="seup-form-group">';
+print '<label for="archiveRazlog" class="seup-label">Razlog arhiviranja (opcionalno)</label>';
+print '<textarea id="archiveRazlog" class="seup-textarea" rows="3" placeholder="Unesite razlog arhiviranja..."></textarea>';
+print '</div>';
+print '</div>';
+print '<div class="seup-modal-footer">';
+print '<button type="button" class="seup-btn seup-btn-secondary" id="cancelArchiveBtn">Odustani</button>';
+print '<button type="button" class="seup-btn seup-btn-danger" id="confirmArchiveBtn">';
+print '<i class="fas fa-archive me-2"></i>Arhiviraj';
+print '</button>';
+print '</div>';
+print '</div>';
+print '</div>';
+
 // JavaScript for enhanced functionality
 print '<script src="/custom/seup/js/seup-modern.js"></script>';
 
@@ -471,12 +524,14 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('.seup-btn-archive').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
-            if (confirm('Jeste li sigurni da želite arhivirati ovaj predmet?')) {
-                this.classList.add('seup-loading');
-                // Implement archive functionality
-                console.log('Archive predmet:', id);
-                showMessage('Predmet je arhiviran', 'success');
-            }
+            const row = this.closest('.seup-table-row');
+            const klasaCell = row.querySelector('.seup-klasa-link');
+            const nazivCell = row.querySelector('.seup-naziv-cell');
+            
+            const klasa = klasaCell ? klasaCell.textContent : 'N/A';
+            const naziv = nazivCell ? nazivCell.getAttribute('title') || nazivCell.textContent : 'N/A';
+            
+            openArchiveModal(id, klasa, naziv);
         });
     });
 
@@ -527,6 +582,93 @@ document.addEventListener("DOMContentLoaded", function() {
     tableRows.forEach((row, index) => {
         row.style.animationDelay = `${index * 100}ms`;
         row.classList.add('animate-fade-in-up');
+    });
+
+    // Archive Modal Functionality
+    let currentArchiveId = null;
+
+    function openArchiveModal(predmetId, klasa, naziv) {
+        currentArchiveId = predmetId;
+        
+        // Update modal content
+        document.getElementById('archiveKlasa').textContent = klasa;
+        document.getElementById('archiveNaziv').textContent = naziv;
+        
+        // Show modal
+        document.getElementById('archiveModal').classList.add('show');
+    }
+
+    function closeArchiveModal() {
+        document.getElementById('archiveModal').classList.remove('show');
+        document.getElementById('archiveRazlog').value = '';
+        currentArchiveId = null;
+    }
+
+    function confirmArchive() {
+        if (!currentArchiveId) return;
+        
+        const razlog = document.getElementById('archiveRazlog').value.trim();
+        const confirmBtn = document.getElementById('confirmArchiveBtn');
+        
+        // Add loading state
+        confirmBtn.classList.add('seup-loading');
+        
+        const formData = new FormData();
+        formData.append('action', 'archive_predmet');
+        formData.append('predmet_id', currentArchiveId);
+        if (razlog) {
+            formData.append('razlog', razlog);
+        }
+        
+        fetch('predmeti.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove row from table with animation
+                const row = document.querySelector(`[data-id="${currentArchiveId}"]`);
+                if (row) {
+                    row.style.animation = 'fadeOut 0.5s ease-out';
+                    setTimeout(() => {
+                        row.remove();
+                        updateVisibleCount();
+                    }, 500);
+                }
+                
+                showMessage(`Predmet uspješno arhiviran! Premješteno ${data.files_moved} dokumenata.`, 'success');
+                closeArchiveModal();
+            } else {
+                showMessage('Greška pri arhiviranju: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Archive error:', error);
+            showMessage('Došlo je do greške pri arhiviranju', 'error');
+        })
+        .finally(() => {
+            confirmBtn.classList.remove('seup-loading');
+        });
+    }
+
+    function updateVisibleCount() {
+        const visibleRows = document.querySelectorAll('.seup-table-row[data-id]:not([style*="display: none"])');
+        if (visibleCountSpan) {
+            visibleCountSpan.textContent = visibleRows.length;
+        }
+    }
+
+    // Archive modal event listeners
+    document.getElementById('closeArchiveModal').addEventListener('click', closeArchiveModal);
+    document.getElementById('cancelArchiveBtn').addEventListener('click', closeArchiveModal);
+    document.getElementById('confirmArchiveBtn').addEventListener('click', confirmArchive);
+
+    // Close modal when clicking outside
+    document.getElementById('archiveModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeArchiveModal();
+        }
     });
 });
 </script>
@@ -1071,6 +1213,13 @@ document.addEventListener("DOMContentLoaded", function() {
   color: var(--warning-700);
   display: flex;
   align-items: center;
+}
+
+.seup-archive-naziv {
+  font-size: var(--text-base);
+  color: var(--secondary-700);
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-medium);
 }
 
 .seup-btn-danger {
