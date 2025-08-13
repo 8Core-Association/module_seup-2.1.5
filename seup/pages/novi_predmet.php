@@ -232,14 +232,14 @@ print '<form method="post" action="' . $_SERVER['PHP_SELF'] . '" class="seup-for
 print '<div class="seup-form-grid">';
 
 print '<div class="seup-form-group">';
-print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group me-2"></i>Klasa broj</label>';
+print '<label for="klasa_br" class="seup-label"><i class="fas fa-layer-group"></i> Klasa broj</label>';
 print '<select name="klasa_br" id="klasa_br" class="seup-select" required>';
 print $klasaOptions;
 print '</select>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list me-2"></i>Sadržaj</label>';
+print '<label for="sadrzaj" class="seup-label"><i class="fas fa-list"></i> Sadržaj</label>';
 print '<select name="sadrzaj" id="sadrzaj" class="seup-select" required>';
 print '<option value="">' . $langs->trans("Odaberi Sadrzaj") . '</option>';
 print '</select>';
@@ -250,14 +250,14 @@ print '</div>'; // seup-form-grid
 print '<div class="seup-form-grid">';
 
 print '<div class="seup-form-group">';
-print '<label for="dosjeBroj" class="seup-label"><i class="fas fa-folder me-2"></i>Dosje broj</label>';
+print '<label for="dosjeBroj" class="seup-label"><i class="fas fa-folder"></i> Dosje broj</label>';
 print '<select name="dosjeBroj" id="dosjeBroj" class="seup-select" required>';
 print '<option value="">' . $langs->trans("Odaberi Dosje Broj") . '</option>';
 print '</select>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="zaposlenik" class="seup-label"><i class="fas fa-user me-2"></i>Zaposlenik</label>';
+print '<label for="zaposlenik" class="seup-label"><i class="fas fa-user"></i> Zaposlenik</label>';
 print '<select class="seup-select" id="zaposlenik" name="zaposlenik" required>';
 print $zaposlenikOptions;
 print '</select>';
@@ -266,7 +266,7 @@ print '</div>';
 print '</div>'; // seup-form-grid
 
 print '<div class="seup-form-group">';
-print '<label for="stranka" class="seup-label"><i class="fas fa-building me-2"></i>Stranka</label>';
+print '<label for="stranka" class="seup-label"><i class="fas fa-building"></i> Stranka</label>';
 print '<div class="seup-stranka-container">';
 print '<select class="seup-select" id="stranka" name="stranka" disabled style="flex: 1;"></select>';
 print '<div class="seup-checkbox-container">';
@@ -299,24 +299,24 @@ print '</div>';
 print '<div class="seup-form">';
 
 print '<div class="seup-form-group">';
-print '<label for="naziv" class="seup-label"><i class="fas fa-heading me-2"></i>Naziv predmeta</label>';
+print '<label for="naziv" class="seup-label"><i class="fas fa-heading"></i> Naziv predmeta</label>';
 print '<textarea class="seup-textarea" id="naziv" name="naziv" rows="4" maxlength="500" placeholder="Unesite naziv predmeta (maksimalno 500 znakova)"></textarea>';
 print '<div class="seup-char-counter" id="charCounter">0 / 500</div>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label for="datumOtvaranja" class="seup-label"><i class="fas fa-calendar me-2"></i>Datum otvaranja predmeta</label>';
+print '<label for="datumOtvaranja" class="seup-label"><i class="fas fa-calendar"></i> Datum otvaranja predmeta</label>';
 print '<button type="button" class="seup-date-btn" id="datumOtvaranjaBtn">';
-print '<i class="fas fa-calendar me-2"></i>Odaberi datum';
+print '<i class="fas fa-calendar"></i> Odaberi datum';
 print '</button>';
 print '<input type="hidden" name="datumOtvaranja" id="datumOtvaranja">';
-print '<div class="seup-help-text"><i class="fas fa-info-circle me-1"></i>Ostavite prazno za današnji datum</div>';
+print '<div class="seup-help-text"><i class="fas fa-info-circle"></i> Ostavite prazno za današnji datum</div>';
 print '</div>';
 
 print '<div class="seup-form-group">';
-print '<label class="seup-label"><i class="fas fa-tags me-2"></i>Oznake</label>';
+print '<label class="seup-label"><i class="fas fa-tags"></i> Oznake</label>';
 print '<button type="button" class="seup-tags-btn" id="tagsBtn">';
-print '<i class="fas fa-tags me-2"></i>Odaberi oznake';
+print '<i class="fas fa-tags"></i> Odaberi oznake';
 print '</button>';
 print '<div class="seup-selected-tags" id="selectedTagsContainer">';
 print '<div class="text-muted small">Nema odabranih oznaka</div>';
@@ -325,7 +325,7 @@ print '</div>';
 
 print '<div class="seup-form-actions">';
 print '<button type="button" class="seup-btn seup-btn-primary" id="otvoriPredmetBtn">';
-print '<i class="fas fa-plus me-2"></i>Otvori Predmet';
+print '<i class="fas fa-plus"></i> Otvori Predmet';
 print '</button>';
 print '</div>';
 
@@ -340,18 +340,23 @@ print '</div>'; // seup-settings-content
 print '<div class="seup-modal" id="dateModal">';
 print '<div class="seup-modal-content">';
 print '<div class="seup-modal-header">';
-print '<h5 class="seup-modal-title"><i class="fas fa-calendar me-2"></i>Odaberi datum</h5>';
+print '<h5 class="seup-modal-title"><i class="fas fa-calendar"></i> Odaberi datum</h5>';
 print '<button type="button" class="seup-modal-close" id="closeDateModal">&times;</button>';
 print '</div>';
 print '<div class="seup-modal-body">';
 print '<div class="calendar-header">';
+print '<div class="calendar-year-month">';
+print '<select id="yearSelect" class="seup-select calendar-year-select"></select>';
+print '<select id="monthSelect" class="seup-select calendar-month-select"></select>';
+print '</div>';
+print '<div class="calendar-nav-buttons">';
 print '<button type="button" class="seup-btn seup-btn-secondary seup-btn-sm" id="prevMonth">';
 print '<i class="fas fa-chevron-left"></i>';
 print '</button>';
-print '<h5 id="currentMonth">Siječanj 2025</h5>';
 print '<button type="button" class="seup-btn seup-btn-secondary seup-btn-sm" id="nextMonth">';
 print '<i class="fas fa-chevron-right"></i>';
 print '</button>';
+print '</div>';
 print '</div>';
 print '<div class="calendar-grid" id="calendarGrid"></div>';
 print '</div>';
@@ -366,14 +371,14 @@ print '</div>';
 print '<div class="seup-modal" id="tagsModal">';
 print '<div class="seup-modal-content">';
 print '<div class="seup-modal-header">';
-print '<h5 class="seup-modal-title"><i class="fas fa-tags me-2"></i>Odaberi oznake</h5>';
+print '<h5 class="seup-modal-title"><i class="fas fa-tags"></i> Odaberi oznake</h5>';
 print '<button type="button" class="seup-modal-close" id="closeTagsModal">&times;</button>';
 print '</div>';
 print '<div class="seup-modal-body">';
 print '<div class="seup-tags-grid" id="tagsGrid">';
 foreach ($tags as $tag) {
     print '<div class="seup-tag-option" data-tag-id="' . $tag->rowid . '">';
-    print '<i class="fas fa-tag me-2"></i>' . htmlspecialchars($tag->tag);
+    print '<i class="fas fa-tag"></i> ' . htmlspecialchars($tag->tag);
     print '</div>';
 }
 print '</div>';
@@ -562,10 +567,45 @@ document.addEventListener("DOMContentLoaded", function() {
         'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'
     ];
 
+    // Generate year and month selects
+    function populateYearMonthSelects() {
+        const yearSelect = document.getElementById('yearSelect');
+        const monthSelect = document.getElementById('monthSelect');
+        
+        // Populate years (current year ± 5)
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+        for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+            const option = new Option(year, year);
+            if (year === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+        
+        // Populate months
+        monthSelect.innerHTML = '';
+        monthNames.forEach((month, index) => {
+            const option = new Option(month, index);
+            if (index === currentMonth) option.selected = true;
+            monthSelect.appendChild(option);
+        });
+        
+        // Event listeners for year/month changes
+        yearSelect.addEventListener('change', function() {
+            currentYear = parseInt(this.value);
+            generateCalendar();
+        });
+        
+        monthSelect.addEventListener('change', function() {
+            currentMonth = parseInt(this.value);
+            generateCalendar();
+        });
+    }
+
     function openDateModal(targetButton, hiddenInput) {
         currentDateTarget = { button: targetButton, input: hiddenInput };
         const modal = document.getElementById('dateModal');
         modal.classList.add('show');
+        populateYearMonthSelects();
         generateCalendar();
     }
 
@@ -578,9 +618,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function generateCalendar() {
         const grid = document.getElementById('calendarGrid');
-        const monthHeader = document.getElementById('currentMonth');
-        
-        monthHeader.textContent = `${monthNames[currentMonth]} ${currentYear}`;
         
         // Clear previous calendar
         grid.innerHTML = '';
@@ -719,7 +756,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const tagElement = document.createElement('div');
                     tagElement.className = 'seup-selected-tag';
                     tagElement.innerHTML = `
-                        <i class="fas fa-tag me-1"></i>
+                        <i class="fas fa-tag"></i> 
                         ${tagName}
                         <button type="button" class="seup-tag-remove" data-tag-id="${tagId}">
                             <i class="fas fa-times"></i>
@@ -742,9 +779,9 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update button text
         const tagsBtn = document.getElementById('tagsBtn');
         if (selectedTagIds.size === 0) {
-            tagsBtn.innerHTML = '<i class="fas fa-tags me-2"></i>Odaberi oznake';
+            tagsBtn.innerHTML = '<i class="fas fa-tags"></i> Odaberi oznake';
         } else {
-            tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odabrano: ${selectedTagIds.size} oznaka`;
+            tagsBtn.innerHTML = `<i class="fas fa-tags"></i> Odabrano: ${selectedTagIds.size} oznaka`;
         }
         
         closeTagsModal();
@@ -776,9 +813,9 @@ document.addEventListener("DOMContentLoaded", function() {
             // Update button text
             const tagsBtn = document.getElementById('tagsBtn');
             if (selectedTagIds.size === 0) {
-                tagsBtn.innerHTML = '<i class="fas fa-tags me-2"></i>Odaberi oznake';
+                tagsBtn.innerHTML = '<i class="fas fa-tags"></i> Odaberi oznake';
             } else {
-                tagsBtn.innerHTML = `<i class="fas fa-tags me-2"></i>Odabrano: ${selectedTagIds.size} oznaka`;
+                tagsBtn.innerHTML = `<i class="fas fa-tags"></i> Odabrano: ${selectedTagIds.size} oznaka`;
             }
         }
     });
@@ -933,14 +970,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     charCounter.classList.remove('warning', 'danger');
                     
                     // Reset date buttons
-                    document.getElementById('datumOtvaranjaBtn').innerHTML = '<i class="fas fa-calendar me-2"></i>Odaberi datum';
+                    document.getElementById('datumOtvaranjaBtn').innerHTML = '<i class="fas fa-calendar"></i> Odaberi datum';
                     document.getElementById('datumOtvaranjaBtn').classList.remove('selected');
                     document.getElementById('datumOtvaranja').value = '';
                     
                     // Reset tags
                     selectedTagIds.clear();
                     updateSelectedTagsDisplay();
-                    document.getElementById('tagsBtn').innerHTML = '<i class="fas fa-tags me-2"></i>Odaberi oznake';
+                    document.getElementById('tagsBtn').innerHTML = '<i class="fas fa-tags"></i> Odaberi oznake';
                     
                     // Reset stranka
                     const strankaCheckbox = document.getElementById('strankaCheck');
@@ -972,7 +1009,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         messageEl.className = `seup-message-toast seup-message-${type} show`;
         messageEl.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> 
             ${message}
         `;
 

@@ -309,17 +309,34 @@
 
 /* Calendar Styles */
 .calendar-header {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--neutral-200);
 }
 
-.calendar-header h5 {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--secondary-900);
-  margin: 0;
+.calendar-year-month {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.calendar-year-select,
+.calendar-month-select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: white;
+  min-width: 100px;
+}
+
+.calendar-nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 .calendar-grid {
