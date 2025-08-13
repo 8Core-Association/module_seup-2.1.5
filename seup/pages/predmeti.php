@@ -190,6 +190,27 @@ foreach ($ustanove as $ustanova) {
     }
 }
 print '</select>';
+print '<select id="filterZaposlenik" class="seup-filter-select">';
+print '<option value="">Svi zaposlenici</option>';
+// Add unique zaposlenici from predmeti
+$zaposlenici = array_unique(array_column($predmeti, 'ime_prezime'));
+foreach ($zaposlenici as $zaposlenik) {
+    if ($zaposlenik) {
+        print '<option value="' . htmlspecialchars($zaposlenik) . '">' . htmlspecialchars($zaposlenik) . '</option>';
+    }
+}
+print '</select>';
+print '<select id="filterGodina" class="seup-filter-select">';
+print '<option value="">Sve godine</option>';
+// Add unique godine from predmeti
+$godine = array_unique(array_column($predmeti, 'godina'));
+sort($godine);
+foreach ($godine as $godina) {
+    if ($godina) {
+        print '<option value="' . htmlspecialchars($godina) . '">20' . htmlspecialchars($godina) . '</option>';
+    }
+}
+print '</select>';
 print '</div>';
 print '</div>';
 
@@ -358,12 +379,16 @@ document.addEventListener("DOMContentLoaded", function() {
     // Enhanced search and filter functionality
     const searchInput = document.getElementById(\'searchInput\');
     const filterUstanova = document.getElementById(\'filterUstanova\');
+    const filterZaposlenik = document.getElementById('filterZaposlenik');
+    const filterGodina = document.getElementById('filterGodina');
     const tableRows = document.querySelectorAll(\'.seup-table-row[data-id]\');
     const visibleCountSpan = document.getElementById(\'visibleCount\');
 
     function filterTable() {
         const searchTerm = searchInput.value.toLowerCase();
         const selectedUstanova = filterUstanova.value;
+        const selectedZaposlenik = filterZaposlenik.value;
+        const selectedGodina = filterGodina.value;
         let visibleCount = 0;
 
         tableRows.forEach(row => {
@@ -380,7 +405,25 @@ document.addEventListener("DOMContentLoaded", function() {
                 matchesUstanova = ustanovaCell.textContent.trim() === selectedUstanova;
             }
 
-            if (matchesSearch && matchesUstanova) {
+            // Check zaposlenik filter
+            let matchesZaposlenik = true;
+            if (selectedZaposlenik) {
+                const zaposlenikCell = cells[4]; // zaposlenik column
+                matchesZaposlenik = zaposlenikCell.textContent.trim() === selectedZaposlenik;
+            }
+
+            // Check godina filter
+            let matchesGodina = true;
+            if (selectedGodina) {
+                const klasaCell = cells[1]; // klasa column contains year
+                const klasaText = klasaCell.textContent;
+                // Extract year from klasa format: XXX-XX/YY-XX/X
+                const yearMatch = klasaText.match(/\/(\d{2})-/);
+                if (yearMatch) {
+                    matchesGodina = yearMatch[1] === selectedGodina;
+                }
+            }
+            if (matchesSearch && matchesUstanova && matchesZaposlenik && matchesGodina) {
                 row.style.display = \'\';
                 visibleCount++;
                 // Add staggered animation
@@ -406,6 +449,13 @@ document.addEventListener("DOMContentLoaded", function() {
         filterUstanova.addEventListener(\'change\', filterTable);
     }
 
+    if (filterZaposlenik) {
+        filterZaposlenik.addEventListener('change', filterTable);
+    }
+    
+    if (filterGodina) {
+        filterGodina.addEventListener('change', filterTable);
+    }
     // Enhanced row interactions
     tableRows.forEach(row => {
         row.addEventListener(\'mouseenter\', function() {
