@@ -89,11 +89,10 @@ if (empty($caseId)) {
 }
 
 // Definiranje direktorija za učitavanje dokumenata
-$upload_base_dir = DOL_DATA_ROOT . '/ecm/';
-$upload_dir = $upload_base_dir . 'SEUP/predmet_' . $caseId . '/';
-// Create directory if not exists
-if (!is_dir($upload_dir)) {
-    dol_mkdir($upload_dir);
+$upload_base_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/';
+// Create base directory if not exists
+if (!is_dir($upload_base_dir)) {
+    dol_mkdir($upload_base_dir);
 }
 
 dol_syslog("Accessing case details for ID: $caseId", LOG_DEBUG);

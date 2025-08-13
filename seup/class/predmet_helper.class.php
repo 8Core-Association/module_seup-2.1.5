@@ -149,7 +149,25 @@ class Predmet_helper
         try {
             $db->begin();
             
-            $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+            // Get predmet details to build proper directory name
+            $sql = "SELECT 
+                        CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                        ko.opis_klasifikacijske_oznake
+                    FROM " . MAIN_DB_PREFIX . "a_predmet p
+                    LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                    WHERE p.ID_predmeta = " . (int)$predmet_id;
+            
+            $resql = $db->query($sql);
+            if (!$resql || $db->num_rows($resql) == 0) {
+                return ['success' => false, 'error' => 'Predmet not found'];
+            }
+            
+            $predmet = $db->fetch_object($resql);
+            $folder_name = $predmet->klasa . '-' . ($predmet->opis_klasifikacijske_oznake ?: 'Bez opisa');
+            // Sanitize folder name
+            $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+            
+            $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/' . $folder_name . '/';
             
             if (!is_dir($upload_dir)) {
                 return ['success' => false, 'error' => 'Directory does not exist'];
@@ -165,8 +183,9 @@ class Predmet_helper
             }
 
             // Get files from database
+            $relative_path = 'SEUP/Predmeti/' . $folder_name . '/';
             $sql = "SELECT filename FROM " . MAIN_DB_PREFIX . "ecm_files 
-                    WHERE filepath = 'SEUP/predmet_" . (int)$predmet_id . "/'";
+                    WHERE filepath = '" . $db->escape($relative_path) . "'";
             $resql = $db->query($sql);
             $database_files = [];
             if ($resql) {
@@ -180,7 +199,7 @@ class Predmet_helper
             $added_count = 0;
 
             foreach ($missing_files as $filename) {
-                $filepath = 'SEUP/predmet_' . $predmet_id . '/';
+                $filepath = $relative_path;
                 $fullpath = $upload_dir . $filename;
                 
                 // Generate external urbroj
@@ -195,7 +214,7 @@ class Predmet_helper
                 $ecmfile->label = $filename;
                 $ecmfile->entity = $conf->entity;
                 $ecmfile->gen_or_uploaded = 'uploaded';
-                $ecmfile->description = 'External file synced for predmet ' . $predmet_id;
+                $ecmfile->description = 'External file synced for predmet ' . $predmet_id . ' (' . $predmet->klasa . ')';
                 $ecmfile->fk_user_c = $user->id;
                 $ecmfile->fk_user_m = $user->id;
                 $ecmfile->filetype = dol_mimetype($filename);
@@ -227,7 +246,25 @@ class Predmet_helper
      */
     public static function getFileStats($db, $predmet_id)
     {
-        $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+        // Get predmet details to build proper directory name
+        $sql = "SELECT 
+                    CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                    ko.opis_klasifikacijske_oznake
+                FROM " . MAIN_DB_PREFIX . "a_predmet p
+                LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                WHERE p.ID_predmeta = " . (int)$predmet_id;
+        
+        $resql = $db->query($sql);
+        if (!$resql || $db->num_rows($resql) == 0) {
+            return ['filesystem_count' => 0, 'database_count' => 0, 'needs_sync' => false];
+        }
+        
+        $predmet = $db->fetch_object($resql);
+        $folder_name = $predmet->klasa . '-' . ($predmet->opis_klasifikacijske_oznake ?: 'Bez opisa');
+        // Sanitize folder name
+        $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+        
+        $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/' . $folder_name . '/';
         
         // Count filesystem files
         $filesystem_count = 0;
@@ -241,8 +278,9 @@ class Predmet_helper
         }
 
         // Count database files
+        $relative_path = 'SEUP/Predmeti/' . $folder_name . '/';
         $sql = "SELECT COUNT(*) as count FROM " . MAIN_DB_PREFIX . "ecm_files 
-                WHERE filepath = 'SEUP/predmet_" . (int)$predmet_id . "/'";
+                WHERE filepath = '" . $db->escape($relative_path) . "'";
         $resql = $db->query($sql);
         $database_count = 0;
         if ($resql && $obj = $db->fetch_object($resql)) {
@@ -440,6 +478,27 @@ class Predmet_helper
      */
     public static function fetchUploadedDocuments($db, $conf, &$documentTableHTML, $langs, $caseId)
     {
+        // Get predmet details to build proper directory name
+        $sql = "SELECT 
+                    CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                    ko.opis_klasifikacijske_oznake
+                FROM " . MAIN_DB_PREFIX . "a_predmet p
+                LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                WHERE p.ID_predmeta = " . (int)$caseId;
+        
+        $resql = $db->query($sql);
+        if (!$resql || $db->num_rows($resql) == 0) {
+            $documentTableHTML = '<div class="alert alert-danger">Predmet not found</div>';
+            return;
+        }
+        
+        $predmet = $db->fetch_object($resql);
+        $folder_name = $predmet->klasa . '-' . ($predmet->opis_klasifikacijske_oznake ?: 'Bez opisa');
+        // Sanitize folder name
+        $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+        
+        $relative_path = 'SEUP/Predmeti/' . $folder_name . '/';
+        
         $sql = "SELECT 
                     e.rowid,
                     e.filename,
@@ -449,7 +508,7 @@ class Predmet_helper
                     CONCAT(u.firstname, ' ', u.lastname) as uploaded_by
                 FROM " . MAIN_DB_PREFIX . "ecm_files e
                 LEFT JOIN " . MAIN_DB_PREFIX . "user u ON e.fk_user_c = u.rowid
-                WHERE e.filepath = 'SEUP/predmet_" . (int)$caseId . "/'
+                WHERE e.filepath = '" . $db->escape($relative_path) . "'
                 ORDER BY e.date_c DESC";
 
         $resql = $db->query($sql);
@@ -475,7 +534,7 @@ class Predmet_helper
 
             foreach ($documents as $doc) {
                 $download_url = DOL_URL_ROOT . '/document.php?modulepart=ecm&file=' . 
-                               urlencode('SEUP/predmet_' . $caseId . '/' . $doc->filename);
+                               urlencode($relative_path . $doc->filename);
                 
                 $documentTableHTML .= '<tr>';
                 $documentTableHTML .= '<td>' . htmlspecialchars($doc->filename) . '</td>';
@@ -531,8 +590,24 @@ class Predmet_helper
             }
             
             // Move files to archive directory
-            $source_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
-            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/arhiva/predmet_' . $predmet_id . '/';
+            // Get predmet details for proper folder structure
+            $sql = "SELECT 
+                        CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                        ko.opis_klasifikacijske_oznake
+                    FROM " . MAIN_DB_PREFIX . "a_predmet p
+                    LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                    WHERE p.ID_predmeta = " . (int)$predmet_id;
+            
+            $resql = $db->query($sql);
+            if ($resql && $obj = $db->fetch_object($resql)) {
+                $folder_name = $obj->klasa . '-' . ($obj->opis_klasifikacijske_oznake ?: 'Bez opisa');
+                $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+            } else {
+                $folder_name = 'predmet_' . $predmet_id;
+            }
+            
+            $source_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/' . $folder_name . '/';
+            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/Arhiva/' . $folder_name . '/';
             
             $files_moved = 0;
             if (is_dir($source_dir)) {
@@ -549,9 +624,11 @@ class Predmet_helper
             }
             
             // Update ECM records
+            $old_path = 'SEUP/Predmeti/' . $folder_name . '/';
+            $new_path = 'SEUP/Arhiva/' . $folder_name . '/';
             $sql = "UPDATE " . MAIN_DB_PREFIX . "ecm_files 
-                    SET filepath = 'SEUP/arhiva/predmet_" . (int)$predmet_id . "/' 
-                    WHERE filepath = 'SEUP/predmet_" . (int)$predmet_id . "/'";
+                    SET filepath = '" . $db->escape($new_path) . "' 
+                    WHERE filepath = '" . $db->escape($old_path) . "'";
             $db->query($sql);
             
             // Insert into arhiva table
@@ -606,8 +683,24 @@ class Predmet_helper
             $predmet_id = $arhiva->ID_predmeta;
             
             // Move files back to active directory
-            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/arhiva/predmet_' . $predmet_id . '/';
-            $active_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $predmet_id . '/';
+            // Get predmet details for proper folder structure
+            $sql = "SELECT 
+                        CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                        ko.opis_klasifikacijske_oznake
+                    FROM " . MAIN_DB_PREFIX . "a_predmet p
+                    LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                    WHERE p.ID_predmeta = " . (int)$predmet_id;
+            
+            $resql = $db->query($sql);
+            if ($resql && $obj = $db->fetch_object($resql)) {
+                $folder_name = $obj->klasa . '-' . ($obj->opis_klasifikacijske_oznake ?: 'Bez opisa');
+                $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+            } else {
+                $folder_name = 'predmet_' . $predmet_id;
+            }
+            
+            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/Arhiva/' . $folder_name . '/';
+            $active_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/' . $folder_name . '/';
             
             $files_moved = 0;
             if (is_dir($archive_dir)) {
@@ -624,9 +717,11 @@ class Predmet_helper
             }
             
             // Update ECM records
+            $old_path = 'SEUP/Arhiva/' . $folder_name . '/';
+            $new_path = 'SEUP/Predmeti/' . $folder_name . '/';
             $sql = "UPDATE " . MAIN_DB_PREFIX . "ecm_files 
-                    SET filepath = 'SEUP/predmet_" . (int)$predmet_id . "/' 
-                    WHERE filepath = 'SEUP/arhiva/predmet_" . (int)$predmet_id . "/'";
+                    SET filepath = '" . $db->escape($new_path) . "' 
+                    WHERE filepath = '" . $db->escape($old_path) . "'";
             $db->query($sql);
             
             // Mark archive as inactive
@@ -673,7 +768,23 @@ class Predmet_helper
             $predmet_id = $arhiva->ID_predmeta;
             
             // Delete files from filesystem
-            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/arhiva/predmet_' . $predmet_id . '/';
+            // Get predmet details for proper folder structure
+            $sql = "SELECT 
+                        CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                        ko.opis_klasifikacijske_oznake
+                    FROM " . MAIN_DB_PREFIX . "a_predmet p
+                    LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                    WHERE p.ID_predmeta = " . (int)$predmet_id;
+            
+            $resql = $db->query($sql);
+            if ($resql && $obj = $db->fetch_object($resql)) {
+                $folder_name = $obj->klasa . '-' . ($obj->opis_klasifikacijske_oznake ?: 'Bez opisa');
+                $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+            } else {
+                $folder_name = 'predmet_' . $predmet_id;
+            }
+            
+            $archive_dir = DOL_DATA_ROOT . '/ecm/SEUP/Arhiva/' . $folder_name . '/';
             $files_deleted = 0;
             
             if (is_dir($archive_dir)) {
@@ -689,8 +800,9 @@ class Predmet_helper
             }
             
             // Delete ECM records
+            $relative_path = 'SEUP/Arhiva/' . $folder_name . '/';
             $sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecm_files 
-                    WHERE filepath = 'SEUP/arhiva/predmet_" . (int)$predmet_id . "/'";
+                    WHERE filepath = '" . $db->escape($relative_path) . "'";
             $db->query($sql);
             
             // Delete predmet record
@@ -748,5 +860,38 @@ class Predmet_helper
         } else {
             return "ORDER BY {$prefix}$sortField $sortOrder";
         }
+    }
+    
+    /**
+     * Create directory for new predmet with proper naming
+     */
+    public static function createPredmetDirectory($db, $predmet_id)
+    {
+        // Get predmet details
+        $sql = "SELECT 
+                    CONCAT(p.klasa_br, '-', p.sadrzaj, '/', p.godina, '-', p.dosje_broj, '/', p.predmet_rbr) as klasa,
+                    ko.opis_klasifikacijske_oznake
+                FROM " . MAIN_DB_PREFIX . "a_predmet p
+                LEFT JOIN " . MAIN_DB_PREFIX . "a_klasifikacijska_oznaka ko ON p.ID_klasifikacijske_oznake = ko.ID_klasifikacijske_oznake
+                WHERE p.ID_predmeta = " . (int)$predmet_id;
+        
+        $resql = $db->query($sql);
+        if (!$resql || $db->num_rows($resql) == 0) {
+            return false;
+        }
+        
+        $predmet = $db->fetch_object($resql);
+        $folder_name = $predmet->klasa . '-' . ($predmet->opis_klasifikacijske_oznake ?: 'Bez opisa');
+        // Sanitize folder name for filesystem
+        $folder_name = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $folder_name);
+        
+        $upload_dir = DOL_DATA_ROOT . '/ecm/SEUP/Predmeti/' . $folder_name . '/';
+        
+        // Create directory
+        if (!is_dir($upload_dir)) {
+            return dol_mkdir($upload_dir);
+        }
+        
+        return true;
     }
 }

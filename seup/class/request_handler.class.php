@@ -120,6 +120,11 @@ class Request_Handler
       if (!$predmet_id) {
         throw new Exception("Failed to get new case ID: " . $db->lasterror());
       }
+      
+      // Create proper directory structure
+      if (!Predmet_helper::createPredmetDirectory($db, $predmet_id)) {
+        throw new Exception("Failed to create predmet directory");
+      }
 
       // Insert tag associations if tags are selected
       if (!empty($tags) && is_array($tags)) {
