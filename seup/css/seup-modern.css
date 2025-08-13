@@ -229,10 +229,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0 !important;
   margin: 0;
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
 }
 
 .seup-hero::before {
