@@ -127,6 +127,13 @@ print '<link href="/custom/seup/css/seup-modern.css" rel="stylesheet">';
 // Main hero section
 print '<main class="seup-hero">';
 
+// Copyright footer
+print '<footer class="seup-footer">';
+print '<div class="seup-footer-content">';
+print '<p>Sva prava pridržana © <a href="https://8core.hr" target="_blank" rel="noopener">8Core Association</a> 2014 - ' . date('Y') . '</p>';
+print '</div>';
+print '</footer>';
+
 // Floating background elements
 print '<div class="seup-floating-elements">';
 for ($i = 1; $i <= 5; $i++) {

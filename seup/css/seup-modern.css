@@ -229,8 +229,10 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0;
+  padding: 0 !important;
   margin: 0;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
 }
 
 .seup-hero::before {
@@ -264,6 +266,44 @@ body {
   max-width: 1200px;
   padding: var(--space-8);
   animation: fadeInUp 1s ease-out;
+}
+
+/* Footer */
+.seup-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  z-index: 4;
+  padding: var(--space-4) 0;
+}
+
+.seup-footer-content {
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.seup-footer p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--text-sm);
+  margin: 0;
+  font-weight: var(--font-medium);
+}
+
+.seup-footer a {
+  color: var(--primary-200);
+  text-decoration: none;
+  font-weight: var(--font-semibold);
+  transition: color var(--transition-fast);
+}
+
+.seup-footer a:hover {
+  color: white;
+  text-decoration: underline;
 }
 
 .seup-hero-title {
