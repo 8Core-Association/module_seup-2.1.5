@@ -903,4 +903,196 @@ class Predmet_helper
         
         return $archived;
     }
+
+    /**
+     * Restore a predmet from archive back to active
+     */
+    public static function restorePredmet($db, $conf, $user, $arhiva_id)
+    {
+        $arhiva_id = (int)$arhiva_id;
+        
+        // Start transaction
+        $db->begin();
+        
+        try {
+            // 1. Get archive details
+            $sql = "SELECT 
+                        a.ID_arhive,
+                        a.ID_predmeta,
+                        a.klasa_predmeta,
+                        a.naziv_predmeta,
+                        a.lokacija_arhive,
+                        a.broj_dokumenata
+                    FROM " . MAIN_DB_PREFIX . "a_arhiva a
+                    WHERE a.ID_arhive = $arhiva_id
+                    AND a.status_arhive = 'active'";
+            
+            $resql = $db->query($sql);
+            if (!$resql || $db->num_rows($resql) == 0) {
+                throw new Exception("Archive record not found");
+            }
+            
+            $arhiva = $db->fetch_object($resql);
+            
+            // 2. Create active predmet directory
+            $active_dir = DOL_DATA_ROOT . '/ecm/SEUP/predmet_' . $arhiva->ID_predmeta . '/';
+            
+            if (!dol_mkdir($active_dir)) {
+                throw new Exception("Cannot create active directory: $active_dir");
+            }
+            
+            // 3. Move documents from archive back to active
+            $archive_dir = DOL_DATA_ROOT . '/ecm/' . $arhiva->lokacija_arhive;
+            $moved_files = 0;
+            
+            if (is_dir($archive_dir)) {
+                $files = scandir($archive_dir);
+                foreach ($files as $file) {
+                    if ($file != '.' && $file != '..' && $file != 'metadata.json') {
+                        $source_file = $archive_dir . $file;
+                        $dest_file = $active_dir . $file;
+                        
+                        if (copy($source_file, $dest_file)) {
+                            unlink($source_file); // Remove from archive
+                            $moved_files++;
+                        }
+                    }
+                }
+            }
+            
+            // 4. Update ECM files table
+            $sql = "UPDATE " . MAIN_DB_PREFIX . "ecm_files 
+                    SET filepath = 'SEUP/predmet_" . $arhiva->ID_predmeta . "'
+                    WHERE filepath = '" . $db->escape(rtrim($arhiva->lokacija_arhive, '/')) . "'";
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to update ECM files: " . $db->lasterror());
+            }
+            
+            // 5. Delete archive record
+            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_arhiva 
+                    WHERE ID_arhive = $arhiva_id";
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to delete archive record: " . $db->lasterror());
+            }
+            
+            // 6. Clean up empty archive directory
+            if (is_dir($archive_dir)) {
+                $remaining_files = array_diff(scandir($archive_dir), ['.', '..']);
+                if (count($remaining_files) <= 1) { // Only metadata.json or empty
+                    // Remove metadata.json if exists
+                    $metadata_file = $archive_dir . 'metadata.json';
+                    if (file_exists($metadata_file)) {
+                        unlink($metadata_file);
+                    }
+                    rmdir($archive_dir);
+                }
+            }
+            
+            $db->commit();
+            
+            return [
+                'success' => true,
+                'message' => "Predmet uspješno vraćen iz arhive",
+                'files_moved' => $moved_files,
+                'klasa' => $arhiva->klasa_predmeta
+            ];
+            
+        } catch (Exception $e) {
+            $db->rollback();
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Permanently delete an archive
+     */
+    public static function deleteArchive($db, $conf, $user, $arhiva_id)
+    {
+        $arhiva_id = (int)$arhiva_id;
+        
+        // Start transaction
+        $db->begin();
+        
+        try {
+            // 1. Get archive details
+            $sql = "SELECT 
+                        a.ID_arhive,
+                        a.ID_predmeta,
+                        a.klasa_predmeta,
+                        a.lokacija_arhive,
+                        a.broj_dokumenata
+                    FROM " . MAIN_DB_PREFIX . "a_arhiva a
+                    WHERE a.ID_arhive = $arhiva_id
+                    AND a.status_arhive = 'active'";
+            
+            $resql = $db->query($sql);
+            if (!$resql || $db->num_rows($resql) == 0) {
+                throw new Exception("Archive record not found");
+            }
+            
+            $arhiva = $db->fetch_object($resql);
+            
+            // 2. Delete all files from archive directory
+            $archive_dir = DOL_DATA_ROOT . '/ecm/' . $arhiva->lokacija_arhive;
+            $deleted_files = 0;
+            
+            if (is_dir($archive_dir)) {
+                $files = scandir($archive_dir);
+                foreach ($files as $file) {
+                    if ($file != '.' && $file != '..') {
+                        $file_path = $archive_dir . $file;
+                        if (unlink($file_path)) {
+                            $deleted_files++;
+                        }
+                    }
+                }
+                
+                // Remove directory
+                rmdir($archive_dir);
+            }
+            
+            // 3. Delete ECM files records
+            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "ecm_files 
+                    WHERE filepath = '" . $db->escape(rtrim($arhiva->lokacija_arhive, '/')) . "'";
+            
+            $db->query($sql); // Non-critical if fails
+            
+            // 4. Delete predmet record
+            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_predmet 
+                    WHERE ID_predmeta = " . $arhiva->ID_predmeta;
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to delete predmet record: " . $db->lasterror());
+            }
+            
+            // 5. Delete archive record
+            $sql = "DELETE FROM " . MAIN_DB_PREFIX . "a_arhiva 
+                    WHERE ID_arhive = $arhiva_id";
+            
+            if (!$db->query($sql)) {
+                throw new Exception("Failed to delete archive record: " . $db->lasterror());
+            }
+            
+            $db->commit();
+            
+            return [
+                'success' => true,
+                'message' => "Arhiva je trajno obrisana",
+                'files_deleted' => $deleted_files,
+                'klasa' => $arhiva->klasa_predmeta
+            ];
+            
+        } catch (Exception $e) {
+            $db->rollback();
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }
