@@ -1,4 +1,26 @@
 /**
+ * Plaćena licenca
+ * (c) 2025 8Core Association
+ * Tomislav Galić <tomislav@8core.hr>
+ * Marko Šimunović <marko@8core.hr>
+ * Web: https://8core.hr
+ * Kontakt: info@8core.hr | Tel: +385 099 851 0717
+ * Sva prava pridržana. Ovaj softver je vlasnički i zaštićen je autorskim i srodnim pravima 
+ * te ga je izričito zabranjeno umnožavati, distribuirati, mijenjati, objavljivati ili 
+ * na drugi način eksploatirati bez pismenog odobrenja autora.
+ * U skladu sa Zakonom o autorskom pravu i srodnim pravima 
+ * (NN 167/03, 79/07, 80/11, 125/17), a osobito člancima 32. (pravo na umnožavanje), 35. 
+ * (pravo na preradu i distribuciju) i 76. (kaznene odredbe), 
+ * svako neovlašteno umnožavanje ili prerada ovog softvera smatra se prekršajem. 
+ * Prema Kaznenom zakonu (NN 125/11, 144/12, 56/15), članak 228., stavak 1., 
+ * prekršitelj se može kazniti novčanom kaznom ili zatvorom do jedne godine, 
+ * a sud može izreći i dodatne mjere oduzimanja protivpravne imovinske koristi.
+ * Bilo kakve izmjene, prijevodi, integracije ili dijeljenje koda bez izričitog pismenog 
+ * odobrenja autora smatraju se kršenjem ugovora i zakona te će se pravno sankcionirati. 
+ * Za sva pitanja, zahtjeve za licenciranjem ili dodatne informacije obratite se na info@8core.hr.
+ */
+
+/**
  * SEUP Modern JavaScript Enhancement
  * Provides dynamic interactions and animations
  */
@@ -61,11 +83,13 @@ class SEUPModern {
 
   // Dynamic stats counter
   setupDynamicStats() {
+    // Use real stats from PHP
+    const realStats = window.seupStats || {};
     const stats = [
-      { element: '.stat-predmeti', target: 1247, suffix: '' },
-      { element: '.stat-dokumenti', target: 8934, suffix: '' },
-      { element: '.stat-korisnici', target: 156, suffix: '' },
-      { element: '.stat-ustanove', target: 23, suffix: '' }
+      { element: '.stat-predmeti', target: realStats.predmeti || 0, suffix: '' },
+      { element: '.stat-dokumenti', target: realStats.dokumenti || 0, suffix: '' },
+      { element: '.stat-korisnici', target: realStats.korisnici || 0, suffix: '' },
+      { element: '.stat-ustanove', target: realStats.ustanove || 0, suffix: '' }
     ];
 
     const animateCounter = (element, target, suffix = '') => {
