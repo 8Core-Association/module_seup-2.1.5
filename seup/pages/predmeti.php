@@ -54,6 +54,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 // Local classes
 require_once __DIR__ . '/../class/predmet_helper.class.php';
 
+// Ensure database tables exist (including a_arhiva)
+Predmet_helper::createSeupDatabaseTables($db);
+
 // Load translation files
 $langs->loadLangs(array("seup@seup"));
 
