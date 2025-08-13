@@ -567,23 +567,36 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Calculate and display statistics
     function updateStatistics() {
-        // Count documents from table
-        const documentRows = document.querySelectorAll('.seup-documents-table tbody tr');
-        const docCount = documentRows.length;
-        document.getElementById('stat-documents').textContent = docCount;
+        // Count documents from actual table rows (excluding "no documents" message)
+        const documentTable = document.querySelector('.seup-documents-table tbody');
+        let docCount = 0;
+        if (documentTable) {
+            const rows = documentTable.querySelectorAll('tr');
+            // Only count if it's not the "no documents" message
+            docCount = rows.length;
+        }
+        const statDocEl = document.getElementById('stat-documents');
+        if (statDocEl) {
+            statDocEl.textContent = docCount;
+        }
 
         // Calculate days open (if case details exist)
         <?php if ($caseDetails): ?>
-        const openDate = new Date('<?php echo date('Y-m-d', strtotime(str_replace('.', '-', $caseDetails->datum_otvaranja))); ?>');
+        const openDate = new Date('<?php echo date('Y-m-d', strtotime($caseDetails->datum_otvaranja)); ?>');
         const today = new Date();
         const diffTime = Math.abs(today - openDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        document.getElementById('stat-days').textContent = diffDays;
+        const statDaysEl = document.getElementById('stat-days');
+        if (statDaysEl) {
+            statDaysEl.textContent = diffDays;
+        }
         <?php endif; ?>
 
-        // Simulate views (you can implement real tracking)
-        const views = Math.floor(Math.random() * 50) + 1;
-        document.getElementById('stat-views').textContent = views;
+        // Set views to 1 for now (you can implement real tracking later)
+        const statViewsEl = document.getElementById('stat-views');
+        if (statViewsEl) {
+            statViewsEl.textContent = '1';
+        }
     }
 
     // Toast message function
